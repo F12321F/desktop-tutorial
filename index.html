@@ -2,8 +2,15 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>神秘塔羅牌占卜</title>
+    
+    <!-- 加入 PWA 的 Manifest 設定檔與主題顏色 -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2b1055">
+    <!-- 蘋果裝置的圖示設定 -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🔮%3C/text%3E%3C/svg%3E">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
@@ -14,6 +21,9 @@
             min-height: 100vh;
             overflow-x: hidden;
             margin: 0;
+            /* 讓 App 感覺更像原生應用，禁止選取文字 */
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         /* 滿天星斗背景動畫 */
@@ -224,6 +234,19 @@
     </div>
 
     <script>
+        // --- Service Worker 註冊 (PWA 必備) ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+
         // --- 背景星星動畫生成 ---
         function createStars() {
             const starsContainer = document.getElementById('stars');
@@ -283,7 +306,7 @@
               reversed: "不公、偏見、不誠實、推卸責任。" },
             { id: 12, name: "倒吊人 (The Hanged Man)", icon: "🙃", num: "XII", 
               upright: "暫停、換位思考、犧牲、放手、新視角。", 
-              reversed: "無謂的牺牲、停滯不前、固執、延遲。" },
+              reversed: "無謂的犧牲、停滯不前、固執、延遲。" },
             { id: 13, name: "死神 (Death)", icon: "💀", num: "XIII", 
               upright: "結束、轉變、新生、放下過去、過渡期。", 
               reversed: "抗拒改變、停滯、無法自拔、恐懼未來。" },
@@ -321,7 +344,6 @@
         
         // --- 遊戲邏輯 ---
         
-        // 洗牌演算法 (Fisher-Yates)
         function shuffleDeck() {
             let deck = [...tarotData];
             for (let i = deck.length - 1; i > 0; i--) {
@@ -331,36 +353,31 @@
             return deck;
         }
 
-        // 開始遊戲
         function startGame(category) {
             currentCategory = category;
             if (category === 'daily') {
                 requiredCards = 1;
             } else {
-                requiredCards = 3; // 工作、財運、感情皆使用三張牌陣
+                requiredCards = 3; 
             }
 
             drawnCards = [];
             currentDeck = shuffleDeck();
             
-            // UI 切換
             document.getElementById('phase-select').classList.add('hidden');
             document.getElementById('phase-draw').classList.remove('hidden');
             document.getElementById('phase-draw').classList.add('flex');
             
-            // 更新提示文字
             document.getElementById('draw-instruction').innerText = `請憑直覺抽取 ${requiredCards} 張牌`;
             document.getElementById('draw-status').innerText = `已抽取: 0 / ${requiredCards}`;
             
             renderDeckGrid();
         }
 
-        // 渲染牌堆網格
         function renderDeckGrid() {
             const grid = document.getElementById('deck-grid');
             grid.innerHTML = '';
             
-            // 顯示 22 張蓋著的牌
             for (let i = 0; i < 22; i++) {
                 const cardContainer = document.createElement('div');
                 cardContainer.className = 'card-scene w-12 sm:w-16 md:w-20 lg:w-24';
@@ -368,7 +385,6 @@
                 cardContainer.innerHTML = `
                     <div class="card-object" id="deck-card-${i}" onclick="drawCard(${i})">
                         <div class="card-back rounded-lg shadow-md"></div>
-                        <!-- 正面在抽牌階段不需要詳細渲染，翻開後才決定是哪張 -->
                         <div class="card-front rounded-lg"></div>
                     </div>
                 `;
@@ -376,18 +392,13 @@
             }
         }
 
-        // 抽牌動作
         function drawCard(index) {
-            // 如果已經抽滿，或是這張牌已經被抽過，則忽略
             const cardObj = document.getElementById(`deck-card-${index}`);
             if (drawnCards.length >= requiredCards || cardObj.classList.contains('is-flipped')) {
                 return;
             }
 
-            // 決定正逆位 (50%機率)
             const isReversed = Math.random() > 0.5;
-            
-            // 從洗好的牌堆中取出一張牌
             const cardData = currentDeck[drawnCards.length];
             
             drawnCards.push({
@@ -396,15 +407,12 @@
                 uiIndex: index
             });
 
-            // 視覺效果：讓牌消失或標記已抽
             cardObj.style.opacity = '0.3';
             cardObj.style.pointerEvents = 'none';
             cardObj.style.transform = 'translateY(-20px)';
 
-            // 更新狀態文字
             document.getElementById('draw-status').innerText = `已抽取: ${drawnCards.length} / ${requiredCards}`;
 
-            // 如果抽滿了，進入解牌階段
             if (drawnCards.length === requiredCards) {
                 setTimeout(() => {
                     showResults();
@@ -412,7 +420,6 @@
             }
         }
 
-        // 顯示結果
         function showResults() {
             document.getElementById('phase-draw').classList.add('hidden');
             document.getElementById('phase-draw').classList.remove('flex');
@@ -427,7 +434,6 @@
             spreadContainer.innerHTML = '';
             readingContainer.innerHTML = '';
 
-            // 定義牌陣位置名稱 (依據占卜類別)
             let positionNames = [];
             if (currentCategory === 'daily') {
                 positionNames = ["今日指引"];
@@ -439,7 +445,6 @@
                 positionNames = ["目前感情狀態", "關係的應對建議", "未來的發展預測"];
             }
 
-            // 改變 Grid 佈局以適應卡片數量
             spreadContainer.className = `grid grid-cols-1 ${requiredCards === 3 ? 'md:grid-cols-3' : 'md:grid-cols-1'} gap-6 md:gap-10 w-full mb-10 justify-items-center max-w-4xl`;
 
             drawnCards.forEach((drawn, i) => {
@@ -448,7 +453,6 @@
                 const statusText = drawn.isReversed ? '逆位' : '正位';
                 const statusColor = drawn.isReversed ? 'text-red-400' : 'text-green-400';
                 
-                // 1. 產生展牌區的卡片
                 const cardHtml = `
                     <div class="flex flex-col items-center animate-fade-in-up" style="animation-delay: ${i * 0.2}s">
                         <div class="text-yellow-400 font-bold mb-3 tracking-widest bg-black/40 px-4 py-1 rounded-full border border-yellow-500/30">${posName}</div>
@@ -467,7 +471,6 @@
                 `;
                 spreadContainer.innerHTML += cardHtml;
 
-                // 2. 產生解牌文字區
                 const meaning = drawn.isReversed ? card.reversed : card.upright;
                 const readingHtml = `
                     <div class="border-l-4 ${drawn.isReversed ? 'border-red-500' : 'border-green-500'} pl-4 py-2 animate-fade-in-up" style="animation-delay: ${0.6 + i * 0.2}s">
@@ -484,18 +487,15 @@
             });
         }
 
-        // 重新開始
         function resetGame() {
             document.getElementById('phase-result').classList.add('hidden');
             document.getElementById('phase-result').classList.remove('flex');
             
             document.getElementById('phase-select').classList.remove('hidden');
             
-            // 捲動到頂部
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // 新增簡單的動畫類別至 head
         const style = document.createElement('style');
         style.innerHTML = `
             @keyframes fadeInUp {
@@ -511,4 +511,4 @@
 
     </script>
 </body>
-  </html>
+</html>
