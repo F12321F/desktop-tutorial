@@ -1,20 +1,20 @@
 {
-"name": "神秘塔羅牌占卜",
-"short_name": "塔羅占卜",
-"start_url": ".",
-"display": "standalone",
-"background_color": "#0d041a",
-"theme_color": "#2b1055",
-"icons": [
-{
-"src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🔮%3C/text%3E%3C/svg%3E",
-"sizes": "192x192",
-"type": "image/svg+xml"
-},
-{
-"src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🔮%3C/text%3E%3C/svg%3E",
-"sizes": "512x512",
-"type": "image/svg+xml"
-}
-]
+  "name": "命理綜合占卜",
+  "short_name": "命理占卜",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#090a0f",
+  "theme_color": "#1b2735",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48dGV4dCB5PSIuOWVtIiBmb250LXNpemU9IjkwIj7inKg8L3RleHQ+PC9zdmc+",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48dGV4dCB5PSIuOWVtIiBmb250LXNpemU9IjkwIj7inKg8L3RleHQ+PC9zdmc+",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
 }
