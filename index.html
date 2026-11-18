@@ -60,29 +60,31 @@
 <div class="container" id="menu-screen">
     <div class="glass-panel">
         <h1>✨ 命理綜合占卜 ✨</h1>
-        <p>結合塔羅、星座、生肖與手相，為你提供全方位的指引</p>
+        <p>結合塔羅、星座、生肖與時間維度，為你提供全方位的指引</p>
         
         <div>
+            <select id="time-range-select" style="border-color: var(--accent-gold);">
+                <option value="today">📅 今日運勢</option>
+                <option value="week">📅 本週運勢</option>
+                <option value="month">📅 本月運勢</option>
+                <option value="3months">📅 未來三個月</option>
+                <option value="year">📅 今年運勢</option>
+            </select>
+            <br>
             <select id="zodiac-select">
-                <option value="牡羊座">♈ 牡羊座</option>
-                <option value="金牛座">♉ 金牛座</option>
-                <!-- 其他星座省略，請自行補上，避免過長 -->
-                <option value="雙子座">♊ 雙子座</option><option value="巨蟹座">♋ 巨蟹座</option><option value="獅子座">♌ 獅子座</option><option value="處女座">♍ 處女座</option><option value="天秤座">♎ 天秤座</option><option value="天蠍座">♏ 天蠍座</option><option value="射手座">♐ 射手座</option><option value="摩羯座">♑ 摩羯座</option><option value="水瓶座">♒ 水瓶座</option><option value="雙魚座">♓ 雙魚座</option>
+                <option value="牡羊座">♈ 牡羊座</option><option value="金牛座">♉ 金牛座</option><option value="雙子座">♊ 雙子座</option><option value="巨蟹座">♋ 巨蟹座</option><option value="獅子座">♌ 獅子座</option><option value="處女座">♍ 處女座</option><option value="天秤座">♎ 天秤座</option><option value="天蠍座">♏ 天蠍座</option><option value="射手座">♐ 射手座</option><option value="摩羯座">♑ 摩羯座</option><option value="水瓶座">♒ 水瓶座</option><option value="雙魚座">♓ 雙魚座</option>
             </select>
             <select id="chinese-zodiac-select">
-                <option value="鼠">🐀 鼠</option>
-                <option value="牛">🐂 牛</option>
-                <!-- 其他生肖省略，請自行補上 -->
-                <option value="虎">🐅 虎</option><option value="兔">🐇 兔</option><option value="龍">🐉 龍</option><option value="蛇">🐍 蛇</option><option value="馬">🐎 馬</option><option value="羊">🐏 羊</option><option value="猴">🐒 猴</option><option value="雞">🐓 雞</option><option value="狗">🐕 狗</option><option value="豬">🐖 豬</option>
+                <option value="鼠">🐀 鼠</option><option value="牛">🐂 牛</option><option value="虎">🐅 虎</option><option value="兔">🐇 兔</option><option value="龍">🐉 龍</option><option value="蛇">🐍 蛇</option><option value="馬">🐎 馬</option><option value="羊">🐏 羊</option><option value="猴">🐒 猴</option><option value="雞">🐓 雞</option><option value="狗">🐕 狗</option><option value="豬">🐖 豬</option>
             </select>
         </div>
 
         <div class="grid-buttons">
-            <button onclick="startReading('daily')">🌟 每日運勢</button>
-            <button onclick="startReading('work')">💼 工作運勢</button>
-            <button onclick="startReading('wealth')">💰 財富運勢</button>
-            <button onclick="startReading('love')">❤️ 感情運勢</button>
-            <button onclick="startReading('health')" style="border-color: #2ecc71;">🌿 健康運勢</button>
+            <button onclick="startReading('daily')">🌟 整體運勢</button>
+            <button onclick="startReading('work')">💼 工作事業</button>
+            <button onclick="startReading('wealth')">💰 財富理財</button>
+            <button onclick="startReading('love')">❤️ 感情戀愛</button>
+            <button onclick="startReading('health')" style="border-color: #2ecc71;">🌿 身心健康</button>
             <button onclick="startPalmistry()" style="border-color: #9b59b6;">✋ 手相運勢 (相機)</button>
         </div>
     </div>
@@ -106,7 +108,7 @@
 <div class="container hidden" id="reading-screen">
     <div class="glass-panel">
         <h2 id="reading-title">占卜中...</h2>
-        <p>請依序點擊下方卡牌，翻開你的命運</p>
+        <p id="reading-subtitle">請依序點擊下方卡牌，翻開你的命運</p>
         <div class="cards-container" id="cards-container"></div>
         
         <div id="result-text" class="result-container hidden">
@@ -150,20 +152,50 @@
     ];
 
     const readingTypes = {
-        daily: { id: 'daily', title: "🌟 今日整體狀態分析", name: "每日整體", count: 1, labels: ["今日整體狀態"] },
-        work: { id: 'work', title: "💼 工作事業綜合分析", name: "工作運勢", count: 3, labels: ["目前工作狀態", "工作面臨挑戰與建議", "未來事業發展走向"] },
-        wealth: { id: 'wealth', title: "💰 財富理財綜合分析", name: "財富運勢", count: 3, labels: ["目前財務狀況", "理財盲點與建議", "財運未來走向"] },
-        love: { id: 'love', title: "❤️ 感情戀愛綜合分析", name: "感情運勢", count: 3, labels: ["目前感情狀態", "感情雙方互動與建議", "關係未來發展"] },
-        health: { id: 'health', title: "🌿 身心健康綜合分析", name: "健康運勢", count: 3, labels: ["目前身心狀態", "日常健康保養建議", "未來健康走向"] },
-        palmistry: { id: 'palmistry', title: "✋ 掌紋密碼綜合分析", name: "手相運勢", count: 3, labels: ["生命線 (活力與健康)", "智慧線 (思維與事業)", "感情線 (情感與人際)"] }
+        daily: { id: 'daily', name: "整體狀態", count: 1, labels: ["運勢指引"] },
+        work: { id: 'work', name: "工作運勢", count: 3, labels: ["目前狀態", "面臨挑戰與建議", "未來發展走向"] },
+        wealth: { id: 'wealth', name: "財富運勢", count: 3, labels: ["財務狀況", "理財盲點與建議", "財運未來走向"] },
+        love: { id: 'love', name: "感情運勢", count: 3, labels: ["目前感情狀態", "雙方互動與建議", "關係未來發展"] },
+        health: { id: 'health', name: "健康運勢", count: 3, labels: ["目前身心狀態", "日常保養建議", "未來健康走向"] },
+        palmistry: { id: 'palmistry', name: "手相運勢", count: 3, labels: ["生命線 (活力與健康)", "智慧線 (思維與事業)", "感情線 (情感與人際)"] }
     };
 
-    const zodiacTraits = { "牡羊座":"充滿行動力與熱情", "金牛座":"務實穩重與耐心", "雙子座":"思維敏捷與適應力強", "巨蟹座":"細膩直覺與防衛心", "獅子座":"自信耀眼與主導力", "處女座":"嚴謹細心與追求完美", "天秤座":"追求平衡與和諧", "天蠍座":"洞察力深與愛恨分明", "射手座":"熱愛自由與樂觀", "摩羯座":"踏實堅忍與企圖心", "水瓶座":"打破常規與獨立創新", "雙魚座":"浪漫感性與直覺力" };
-    const czTraits = { "鼠":"機智靈巧、反應快", "牛":"腳踏實地、刻苦耐勞", "虎":"勇猛果敢、具威嚴", "兔":"溫和謹慎、心思細膩", "龍":"氣宇軒昂、追求卓越", "蛇":"冷靜沉著、直覺銳利", "馬":"奔放熱情、勇往直前", "羊":"溫順包容、堅韌不拔", "猴":"聰穎機智、靈活多變", "雞":"勤奮自信、條理分明", "狗":"忠誠正直、重情重義", "豬":"豁達隨和、樂觀知足" };
+    const zodiacTraits = { "牡羊座":"行動力與熱情", "金牛座":"務實與耐心", "雙子座":"思維敏捷與適應力", "巨蟹座":"細膩直覺與防衛心", "獅子座":"自信與主導力", "處女座":"嚴謹細心與追求完美", "天秤座":"追求平衡與和諧", "天蠍座":"洞察力與愛恨分明", "射手座":"熱愛自由與樂觀", "摩羯座":"踏實堅忍與企圖心", "水瓶座":"打破常規與獨立", "雙魚座":"浪漫感性與直覺力" };
+    const czTraits = { "鼠":"機智靈巧", "牛":"腳踏實地", "虎":"勇猛果敢", "兔":"溫和心思細膩", "龍":"追求卓越", "蛇":"冷靜直覺銳利", "馬":"奔放熱情", "羊":"溫順堅韌", "猴":"聰穎靈活多變", "雞":"勤奮條理分明", "狗":"忠誠重情義", "豬":"豁達隨和樂觀" };
+    const timeLabels = { "today": "今日", "week": "本週", "month": "本月", "3months": "未來三個月", "year": "今年" };
 
     let drawnCards = [];
     let flippedCount = 0;
     let currentReading = null;
+
+    // --- 種子亂數產生器 (PRNG) ---
+    function cyrb128(str) {
+        let h1 = 1779033703, h2 = 3144134277, h3 = 1013904242, h4 = 2773480762;
+        for (let i = 0, k; i < str.length; i++) {
+            k = str.charCodeAt(i);
+            h1 = h2 ^ Math.imul(h1 ^ k, 597399067); h2 = h3 ^ Math.imul(h2 ^ k, 2869860233);
+            h3 = h4 ^ Math.imul(h3 ^ k, 951274213); h4 = h1 ^ Math.imul(h4 ^ k, 2716044179);
+        }
+        h1 = Math.imul(h3 ^ (h1 >>> 18), 597399067); h2 = Math.imul(h4 ^ (h2 >>> 22), 2869860233);
+        h3 = Math.imul(h1 ^ (h3 >>> 17), 951274213); h4 = Math.imul(h2 ^ (h4 >>> 19), 2716044179);
+        return (h1^h2^h3^h4)>>>0;
+    }
+    function mulberry32(a) {
+        return function() {
+          var t = a += 0x6D2B79F5;
+          t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+          return ((t ^ t >>> 14) >>> 0) / 4294967296;
+        }
+    }
+    function getTimeString(range) {
+        const d = new Date();
+        if (range === 'today') return d.toDateString();
+        if (range === 'week') { const first = d.getDate() - d.getDay(); return new Date(d.setDate(first)).toDateString(); }
+        if (range === 'month') return `${d.getFullYear()}-${d.getMonth()}`;
+        if (range === '3months') return `${d.getFullYear()}-Q${Math.floor(d.getMonth()/3)}`;
+        if (range === 'year') return `${d.getFullYear()}`;
+        return d.toDateString();
+    }
 
     // 手相拍照處理
     function startPalmistry() {
@@ -179,9 +211,7 @@
                 document.getElementById('scanner-box').style.display = 'block';
                 document.getElementById('palm-preview').src = e.target.result;
                 document.getElementById('scan-line').style.display = 'block';
-                document.getElementById('scan-text').innerText = "AI 掌紋掃描分析中，請稍候...";
-                
-                // 模擬掃描 3 秒後進入塔羅手相結合占卜
+                document.getElementById('scan-text').innerText = "AI 掌紋掃描與時間運勢分析中...";
                 setTimeout(() => {
                     document.getElementById('palmistry-screen').classList.add('hidden');
                     startReading('palmistry');
@@ -191,13 +221,22 @@
         }
     }
 
-    function getRandomCards(count) {
+    function getSeededCards(count, typeId) {
+        const zodiac = document.getElementById('zodiac-select').value;
+        const cz = document.getElementById('chinese-zodiac-select').value;
+        const timeRange = document.getElementById('time-range-select').value;
+        
+        // 綁定時間與個人特質產生專屬隨機序列
+        const seedStr = zodiac + cz + typeId + getTimeString(timeRange);
+        const seed = cyrb128(seedStr);
+        const randomFn = mulberry32(seed);
+
         let deck = [...majorArcana];
         let selected = [];
         for(let i=0; i<count; i++) {
-            let index = Math.floor(Math.random() * deck.length);
+            let index = Math.floor(randomFn() * deck.length);
             let card = deck.splice(index, 1)[0];
-            let isReversed = Math.random() > 0.5;
+            let isReversed = randomFn() > 0.5;
             selected.push({ ...card, isReversed });
         }
         return selected;
@@ -205,12 +244,15 @@
 
     function startReading(type) {
         currentReading = readingTypes[type];
-        drawnCards = getRandomCards(currentReading.count);
+        const timeRange = document.getElementById('time-range-select').value;
+        const timeText = timeLabels[timeRange];
+        
+        drawnCards = getSeededCards(currentReading.count, type);
         flippedCount = 0;
 
         document.getElementById('menu-screen').classList.add('hidden');
         document.getElementById('reading-screen').classList.remove('hidden');
-        document.getElementById('reading-title').innerText = currentReading.title;
+        document.getElementById('reading-title').innerText = `✨ ${timeText}的${currentReading.name}`;
         document.getElementById('result-text').classList.add('hidden');
         
         const container = document.getElementById('cards-container');
@@ -247,11 +289,11 @@
 
     function getContextualMeaning(card, typeId) {
         const keyword = card.isReversed ? card.rev : card.up;
-        if (typeId === 'love') return card.isReversed ? `在感情層面上，暗示了${keyword}的阻礙。` : `在感情中展現出${keyword}的強大能量。`;
-        if (typeId === 'work') return card.isReversed ? `事業上易遇${keyword}狀況，建議保守。` : `職場將迎來${keyword}契機，適合表現。`;
-        if (typeId === 'wealth') return card.isReversed ? `理財需避免${keyword}陷阱，切勿盲目。` : `財富受${keyword}加持，有機會獲報。`;
-        if (typeId === 'health') return card.isReversed ? `身心狀態呈現${keyword}警訊，需休息。` : `健康充滿${keyword}正面活力，免疫力佳。`;
-        if (typeId === 'palmistry') return card.isReversed ? `掌紋反映出近期${keyword}的微弱波折。` : `主線展現了${keyword}的強大先天運勢。`;
+        if (typeId === 'love') return card.isReversed ? `暗示了${keyword}的阻礙。` : `展現出${keyword}的強大能量。`;
+        if (typeId === 'work') return card.isReversed ? `易遇${keyword}狀況，建議保守。` : `將迎來${keyword}契機，適合表現。`;
+        if (typeId === 'wealth') return card.isReversed ? `需避免${keyword}陷阱，切勿盲目。` : `受${keyword}加持，有機會獲報。`;
+        if (typeId === 'health') return card.isReversed ? `呈現${keyword}警訊，需休息。` : `充滿${keyword}正面活力，免疫力佳。`;
+        if (typeId === 'palmistry') return card.isReversed ? `反映出近期${keyword}的微弱波折。` : `展現了${keyword}的強大運勢。`;
         return `整體狀態呈現${keyword}。`;
     }
 
@@ -262,46 +304,49 @@
         const cz = document.getElementById('chinese-zodiac-select').value;
         const typeId = currentReading.id;
         const typeName = currentReading.name;
+        
+        const timeRange = document.getElementById('time-range-select').value;
+        const timeText = timeLabels[timeRange];
 
-        // 1. 塔羅同步分析
-        let tarotHtml = `<h3>🃏 專屬【${typeName}】的塔羅解析</h3>`;
+        // 1. 塔羅時間分析
+        let tarotHtml = `<h3>🃏 【${timeText}】的塔羅解析</h3>`;
         drawnCards.forEach((card, i) => {
             const status = card.isReversed ? '逆位' : '正位';
             tarotHtml += `<p><strong>【${currentReading.labels[i]}】</strong>：${card.name} (${status})<br>${getContextualMeaning(card, typeId)}</p>`;
         });
         document.getElementById('box-tarot').innerHTML = tarotHtml;
 
-        // 2. 星座同步分析
+        // 2. 星座時間分析
         const zTrait = zodiacTraits[zodiac];
-        let zodiacHtml = `<h3>♈ 專屬【${typeName}】的星座觀點</h3>`;
-        zodiacHtml += `<p>身為${zodiac}，你具備「<span class="highlight">${zTrait}</span>」的天性。在此次${typeName}牌陣的各階段中：</p><ul>`;
+        let zodiacHtml = `<h3>♈ 【${timeText}】的專屬星象觀點</h3>`;
+        zodiacHtml += `<p>身為${zodiac}，在<strong>${timeText}</strong>期間，你「<span class="highlight">${zTrait}</span>」的天性將強烈主導${typeName}：</p><ul>`;
         drawnCards.forEach((card, i) => {
-            if(i === 0) zodiacHtml += `<li><strong>關於【${currentReading.labels[i]}】</strong>：你的星座本能讓你${card.isReversed ? '因情緒波動而迷惘。' : '自信掌握主導權。'}</li>`;
-            else if(i === 1) zodiacHtml += `<li><strong>面對【${currentReading.labels[i]}】</strong>：星象建議適時發揮「${zTrait.split('與')[0]}」來突破僵局。</li>`;
-            else zodiacHtml += `<li><strong>針對【${currentReading.labels[i]}】</strong>：順應你天生的節奏，未來發展將明朗。</li>`;
+            if(i === 0) zodiacHtml += `<li>星象影響：你的星座本能讓你在${timeText}${card.isReversed ? '因情緒波動而迷惘。' : '能自信掌握主導權。'}</li>`;
+            else if(i === 1) zodiacHtml += `<li>應對策略：星象建議適時發揮「${zTrait.split('與')[0]}」來突破這段時間的僵局。</li>`;
+            else zodiacHtml += `<li>後續發展：順應你天生的節奏，${timeText}的發展將逐漸明朗。</li>`;
         });
         zodiacHtml += `</ul>`;
         document.getElementById('box-zodiac').innerHTML = zodiacHtml;
 
-        // 3. 生肖同步分析
+        // 3. 生肖時間分析
         const cTrait = czTraits[cz];
-        let czHtml = `<h3>🐀 專屬【${typeName}】的生肖流年</h3>`;
-        czHtml += `<p>屬${cz}的你展現了「<span class="highlight">${cTrait}</span>」的一面。這份生肖力量正與${typeName}產生共鳴：</p><ul>`;
+        let czHtml = `<h3>🐀 【${timeText}】的專屬生肖流年</h3>`;
+        czHtml += `<p>屬${cz}的你展現了「<span class="highlight">${cTrait}</span>」的一面。這份生肖力量在<strong>${timeText}</strong>正與${typeName}產生共鳴：</p><ul>`;
         drawnCards.forEach((card, i) => {
-            if(i === 0) czHtml += `<li><strong>對於【${currentReading.labels[i]}】</strong>：生肖本能讓你對現狀有直覺反應，${card.isReversed ? '留意別讓急躁壞事。' : '能穩健應對變化。'}</li>`;
-            else if(i === 1) czHtml += `<li><strong>針對【${currentReading.labels[i]}】</strong>：流年提醒多運用「${cTrait.split('、')[0]}」化解摩擦。</li>`;
-            else czHtml += `<li><strong>關於【${currentReading.labels[i]}】</strong>：保持強韌生命力，好運將在前方等待。</li>`;
+            if(i === 0) czHtml += `<li>流年干擾：生肖本能讓你對現狀有直覺反應，${card.isReversed ? `留意別讓急躁壞了${timeText}的大事。` : `能穩健應對${timeText}的變化。`}</li>`;
+            else if(i === 1) czHtml += `<li>化解方式：流年提醒多運用「${cTrait}」的優勢化解摩擦。</li>`;
+            else czHtml += `<li>結語：保持強韌生命力，${timeText}的好運將在前方等待。</li>`;
         });
         czHtml += `</ul>`;
         document.getElementById('box-cz').innerHTML = czHtml;
 
-        // 4. 終極綜合分析
+        // 4. 終極綜合時間分析
         const upCount = drawnCards.filter(c => !c.isReversed).length;
-        let combinedHtml = `<h3>🌟 三位一體【${typeName}】終極指南</h3>`;
+        let combinedHtml = `<h3>🌟 三位一體【${timeText}】終極指南</h3>`;
         if(upCount < drawnCards.length / 2) {
-            combinedHtml += `<p>綜合盤勢顯示：你在${typeName}上面臨的考驗，正與${zodiac}的本性或屬${cz}的脾氣產生矛盾。請先放慢腳步，調和內心衝突，【${currentReading.labels[currentReading.labels.length-1]}】才會迎來轉機。</p>`;
+            combinedHtml += `<p>綜合盤勢顯示：你在<strong>${timeText}</strong>面臨的${typeName}考驗，正與${zodiac}的本性或屬${cz}的脾氣產生矛盾。請先放慢腳步，調和內心衝突，這段期間才會迎來轉機。</p>`;
         } else {
-            combinedHtml += `<p>綜合盤勢顯示：絕佳的能量矩陣！你生肖「${cTrait.split('、')[0]}」的優勢完美契合了${zodiac}星象。只要在【${currentReading.labels[0]}】保持自信，必定能將阻力化為豐碩果實！</p>`;
+            combinedHtml += `<p>綜合盤勢顯示：絕佳的能量矩陣！在<strong>${timeText}</strong>期間，你生肖的優勢完美契合了${zodiac}星象。只要保持自信，必定能將這段時間的阻力化為豐碩果實！</p>`;
         }
         document.getElementById('box-combined').innerHTML = combinedHtml;
     }
@@ -310,8 +355,6 @@
         document.getElementById('menu-screen').classList.remove('hidden');
         document.getElementById('palmistry-screen').classList.add('hidden');
         document.getElementById('reading-screen').classList.add('hidden');
-        
-        // 重置手相掃描介面
         document.getElementById('scanner-box').style.display = 'none';
         document.getElementById('scan-line').style.display = 'none';
         document.getElementById('scan-text').innerText = '';
