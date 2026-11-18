@@ -45,22 +45,22 @@
             background: rgba(255, 255, 255, 0.15);
             border: 1px solid var(--glass-border);
             color: #fff;
-            padding: 12px 20px;
-            margin: 10px;
+            padding: 12px 15px;
+            margin: 8px;
             border-radius: 10px;
-            font-size: 16px;
+            font-size: 15px;
             cursor: pointer;
             transition: 0.3s;
         }
         select option { background: #1b2735; color: #fff; }
         button:hover { background: rgba(255, 255, 255, 0.25); transform: translateY(-2px); }
-        .grid-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .grid-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
         .hidden { display: none !important; }
         
         /* 卡牌區塊 */
         .cards-container { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-top: 20px; }
         .card-wrapper { display: flex; flex-direction: column; align-items: center; width: 140px; }
-        .card-label { margin-bottom: 10px; font-weight: bold; color: var(--accent-gold); font-size: 14px; }
+        .card-label { margin-bottom: 10px; font-weight: bold; color: var(--accent-gold); font-size: 14px; text-align: center; height: 40px;}
         .card { width: 120px; height: 200px; perspective: 1000px; cursor: pointer; }
         .card-inner { width: 100%; height: 100%; transition: transform 0.8s; transform-style: preserve-3d; position: relative; }
         .card.flipped .card-inner { transform: rotateY(180deg); }
@@ -98,6 +98,8 @@
         
         .analysis-box h3 { margin-top: 0; color: #fff; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 8px; }
         .highlight { color: var(--accent-gold); font-weight: bold; }
+        ul { padding-left: 20px; margin-top: 10px; }
+        li { margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -143,6 +145,8 @@
             <button onclick="startReading('work')">💼 工作運勢</button>
             <button onclick="startReading('wealth')">💰 財富運勢</button>
             <button onclick="startReading('love')">❤️ 感情運勢</button>
+            <button onclick="startReading('health')" style="border-color: #2ecc71;">🌿 健康運勢</button>
+            <button onclick="startReading('palmistry')" style="border-color: #9b59b6;">✋ 手相運勢</button>
         </div>
     </div>
 </div>
@@ -154,7 +158,6 @@
         <div class="cards-container" id="cards-container"></div>
         
         <div id="result-text" class="result-container hidden">
-            <!-- 四大獨立分析區塊 -->
             <div class="analysis-box tarot" id="box-tarot"></div>
             <div class="analysis-box zodiac" id="box-zodiac"></div>
             <div class="analysis-box cz" id="box-cz"></div>
@@ -169,62 +172,38 @@
         navigator.serviceWorker.register('sw.js').catch(err => console.log('SW failed', err));
     }
 
-    // 塔羅牌專屬資料庫 (包含各領域獨立解讀)
     const majorArcana = [
-        { name: "愚者", up: "新的開始、冒險", rev: "魯莽、不穩定", 
-          love_up: "感情迎來新鮮浪漫的新篇章，不顧一切的吸引力。", love_rev: "缺乏承諾的輕浮關係，感情基礎尚不穩定。", 
-          work_up: "突破框架的新思維，大膽嘗試將帶來機遇。", work_rev: "計畫不周延，需避免職場上的草率決策。", 
-          wealth_up: "意想不到的進帳，適合嘗試新興領域投資。", wealth_rev: "衝動消費，需控管高風險的財務行為。" },
-        { name: "魔術師", up: "創造力、主動", rev: "欺騙、潛能未發揮", 
-          love_up: "主動出擊將大有斬獲，關係中充滿熱情與新鮮感。", love_rev: "當心花言巧語，或是溝通上存在隱瞞與誤解。", 
-          work_up: "掌握關鍵技能，你的提案將獲得高度認可。", work_rev: "能力受限或過度賣弄，需踏實展現專業。", 
-          wealth_up: "靈活運用資金，能開創多元的收入來源。", wealth_rev: "當心投資陷阱，避免將資金投入不熟悉的領域。" },
-        { name: "女祭司", up: "直覺、內在智慧", rev: "忽視直覺、表面", 
-          love_up: "心靈契合的柏拉圖式戀情，憑直覺能看透對方心意。", love_rev: "過度封閉自我，或是對關係抱有不切實際的幻想。", 
-          work_up: "適合進修與深度研究，靜觀其變優於盲目行動。", work_rev: "缺乏主見，或是職場人際關係顯得冷漠疏離。", 
-          wealth_up: "憑藉敏銳的直覺理財，適合長線與保守佈局。", wealth_rev: "因情緒波動而誤判財務情勢，需多聽專業建議。" },
-        { name: "皇后", up: "豐收、培育", rev: "依賴、窒息的愛", 
-          love_up: "充滿溫暖與包容的穩定關係，可能論及婚嫁或懷孕。", love_rev: "過度依賴對方，或是控制慾過強導致關係緊繃。", 
-          work_up: "努力終得回報，專案將開花結果，人緣極佳。", work_rev: "工作進度停滯，或是過於安逸而缺乏突破動力。", 
-          wealth_up: "財源廣進，享受豐盛的物質生活與投資回報。", wealth_rev: "揮霍無度，因過度追求物質享受而造成浪費。" },
-        { name: "皇帝", up: "權威、穩定", rev: "獨裁、固執", 
-          love_up: "穩固且具責任感的感情基礎，重視實際的承諾。", love_rev: "過度大男人/大女人主義，缺乏浪漫與溝通彈性。", 
-          work_up: "展現強大的領導力，能在組織中建立秩序與威信。", work_rev: "濫用職權或過於僵化，無法適應職場的新變動。", 
-          wealth_up: "穩健務實的資產管理，事業帶來豐厚的正財收入。", wealth_rev: "財務調度失去彈性，因固執己見而錯失獲利機會。" },
-        { name: "教皇", up: "傳統、心靈指引", rev: "盲從、打破常規", 
-          love_up: "受眾人祝福的傳統戀情，或是透過長輩介紹結緣。", love_rev: "反抗傳統束縛，或是價值觀產生分歧而不被看好。", 
-          work_up: "適合團隊合作與體制內發展，將遇到良師益友。", work_rev: "受限於繁文縟節，或是對公司文化感到格格不入。", 
-          wealth_up: "遵循傳統且保守的理財方式，財富穩定累積。", wealth_rev: "聽信錯誤的權威意見，或是盲目跟風導致損失。" },
-        { name: "戀人", up: "結合、美好的選擇", rev: "失和、錯誤決定", 
-          love_up: "完美契合的靈魂伴侶，感情甜蜜且具備強烈吸引力。", love_rev: "面臨感情中的艱難抉擇，或是出現第三者誘惑。", 
-          work_up: "絕佳的合作夥伴與結盟機會，人際溝通順暢。", work_rev: "合作關係破裂，或是面臨令你兩難的職涯十字路口。", 
-          wealth_up: "因合作或伴侶關係帶來的財富，投資選擇正確。", wealth_rev: "錯誤的財務決策，或是因人際關係牽扯導致破財。" },
-        { name: "戰車", up: "勝利、意志力", rev: "失控、挫折", 
-          love_up: "積極主動追求，克服阻礙並迅速推進關係進展。", love_rev: "過度強勢導致衝突，或是感情發展面臨停滯不前。", 
-          work_up: "憑藉強大的意志力突破困境，競爭中脫穎而出。", work_rev: "專案進度失控，或是職場方向迷失、陷入無力感。", 
-          wealth_up: "設定目標並積極執行，短期內即可見到財務成效。", wealth_rev: "開銷超出預期，或是因過度自信而導致投資失利。" },
-        // 為了確保程式碼精簡流暢，其餘14張牌採用通用動態補足邏輯，但在實際運算中皆會與分類領域結合
-        { name: "力量", up: "勇氣、耐心", rev: "軟弱、自我懷疑", love_up: "以柔克剛，用耐心與包容化解關係中的矛盾。", love_rev: "感情中缺乏自信，或是無法控制自己的情緒脾氣。", work_up: "面對艱難任務展現堅韌毅力，最終獲得成功。", work_rev: "對工作失去熱忱，或是遭遇挑戰時選擇退縮逃避。", wealth_up: "穩紮穩打的理財規劃，能抵禦市場波動帶來收益。", wealth_rev: "缺乏理財定力，容易因恐慌或誘惑而做出錯誤判斷。" },
-        { name: "隱者", up: "反省、內在指引", rev: "孤立、拒絕幫助", love_up: "需要獨處思考關係的意義，或是享受單身的平靜。", love_rev: "將心門緊閉，過度退縮而錯失與他人建立連結的機會。", work_up: "暫時退居幕後籌備，深入研究專業領域將有大成。", work_rev: "職場人際孤立無援，或是過於堅持己見不願合作。", wealth_up: "審慎評估財務狀況，隱藏的財富或長線投資將發酵。", wealth_rev: "過度保守錯失商機，或是因缺乏資訊而導致財務停滯。" },
-        { name: "命運之輪", up: "轉機、好運", rev: "霉運、抗拒改變", love_up: "命中注定的相遇或轉折，感情運勢將迎來好轉。", love_rev: "關係面臨無法抗拒的外力考驗，需順應局勢變化。", work_up: "事業迎來關鍵的轉捩點，順水推舟將帶來重大突破。", work_rev: "職場局勢動盪不安，抗拒改變只會讓處境更艱難。", wealth_up: "財運亨通，投資或副業將迎來意想不到的豐厚利潤。", wealth_rev: "市場波動劇烈帶來損失，需保守應對財務上的無常。" },
-        { name: "正義", up: "公平、平衡", rev: "不公、偏見", love_up: "感情中講求互相尊重與付出平衡，或面臨法律約定(結婚)。", love_rev: "關係中出現不平等待遇，或是互相指責推卸責任。", work_up: "職場評價公平公正，簽署合約或談判將獲得雙贏。", work_rev: "遭遇職場不公或流言蜚語，需留意合約陷阱與糾紛。", wealth_up: "財務收支達到完美平衡，正當管道的投資將獲利。", wealth_rev: "面臨財務糾紛或罰款，理財失衡導致資金調度困難。" },
-        { name: "倒吊人", up: "換位思考、暫停", rev: "無謂犧牲、停滯", love_up: "心甘情願為愛付出，換個角度看待關係會有新體悟。", love_rev: "在感情中感到委屈卻無法抽身，陷入無意義的等待。", work_up: "工作面臨暫停，但這正是重新調整策略的最佳時機。", work_rev: "白費力氣的專案，或是因優柔寡斷而錯失職場良機。", wealth_up: "暫緩眼前的消費或投資，耐心等待更有利的財務時機。", wealth_rev: "資金被套牢無法動彈，或是為了面子進行無謂的開銷。" },
-        { name: "死神", up: "結束、轉變、新生", rev: "抗拒改變、無法放下", love_up: "徹底告別不適合的過去，為全新的戀情與幸福騰出空間。", love_rev: "沉溺於過去的情傷無法自拔，或是死守著破碎的關係。", work_up: "職涯迎來巨大的重組或轉換跑道，舊有模式徹底翻新。", work_rev: "抗拒職場的轉型與淘汰，因固步自封而面臨被邊緣化。", wealth_up: "徹底重整不良的財務結構，停損後將迎來新的生機。", wealth_rev: "不願面對財務黑洞，無法割捨虧損的投資導致雪上加霜。" },
-        { name: "節制", up: "平衡、和諧、淨化", rev: "極端、失衡", love_up: "感情發展細水長流，雙方溝通順暢且心靈高度契合。", love_rev: "關係中充滿摩擦與極端情緒，無法找到相處的平衡點。", work_up: "跨部門溝通協調極佳，資源整合將發揮一加一大於二的效應。", work_rev: "職場人際衝突不斷，或是工作與生活嚴重失衡導致過勞。", wealth_up: "資金流動順暢且穩定，多元化配置帶來持續性的增長。", wealth_rev: "財務大起大落，因缺乏節制而過度消費或過度投資。" },
-        { name: "惡魔", up: "慾望、物質、束縛", rev: "解脫、重獲自由", love_up: "充滿致命吸引力的肉體關係，或是受制於充滿控制慾的愛。", love_rev: "終於看清感情中的有害模式，決心斬斷孽緣重獲自由。", work_up: "因追求高薪或權力而妥協，工作充滿高壓與利益交換。", work_rev: "擺脫有毒的職場環境，或是跳脫被壓榨的工作模式。", wealth_up: "獲得豐厚的物質報酬，但可能伴隨著高風險或道德爭議。", wealth_rev: "解除債務束縛，或是從過度拜金的迷思中清醒過來。" },
-        { name: "高塔", up: "突變、災難、信念崩塌", rev: "危機解除、拖延改變", love_up: "關係面臨突如其來的爭執或破裂，隱藏的真相被猛烈揭開。", love_rev: "危機暫時解除，但根本問題仍未解決，只是在拖延爆發時間。", work_up: "職場遭遇突發震撼（如裁員、計畫中止），迫使你打掉重練。", work_rev: "死裡逃生避開了職場風暴，但仍需面對環境改變的陣痛期。", wealth_up: "財務面臨突發性的重大損失，原有的理財信念徹底瓦解。", wealth_rev: "破財危機稍有緩解，但仍需立即重整財務結構以防後患。" },
-        { name: "星星", up: "希望、靈感、平靜", rev: "絕望、悲觀", love_up: "感情充滿純粹的希望與理想，雙方對未來有著美好的憧憬。", love_rev: "對感情感到悲觀與失望，或是理想與現實存在過大落差。", work_up: "創意與靈感源源不絕，職涯前景明朗，將獲得貴人指引。", work_rev: "工作失去目標與動力，因自我懷疑而錯失展現才華的機會。", wealth_up: "財務狀況漸入佳境，長線投資或與藝術相關的產業將獲利。", wealth_rev: "因過度樂觀而誤判財務情勢，或是對理財前景感到迷惘。" },
-        { name: "月亮", up: "不安、恐懼、潛意識", rev: "真相大白、撥雲見日", love_up: "關係中充滿猜忌與不安，或是存在著未知的隱瞞與秘密。", love_rev: "解開感情中的誤會與疑慮，隱藏的真相終於浮出水面。", work_up: "職場環境晦暗不明，需小心背後的流言蜚語與潛在陷阱。", work_rev: "釐清了工作上的混亂局勢，內心的恐懼消散，方向轉為清晰。", wealth_up: "財務狀況不明朗，投資存在隱藏風險，切勿盲目聽信內線。", wealth_rev: "看破了財務騙局，或是結束了長期的資金混亂狀態。" },
-        { name: "太陽", up: "成功、喜悅、活力", rev: "短暫悲傷、過度樂觀", love_up: "感情發展熱烈且公開，充滿快樂與溫暖，甚至有新生命降臨。", love_rev: "關係中出現短暫的烏雲，或是對感情的期待過於天真不切實際。", work_up: "事業迎來巔峰與成功，表現備受矚目，充滿無窮的活力與自信。", work_rev: "工作成果被打折扣，或是因過度自信而導致細節上出現疏漏。", wealth_up: "財富豐收，投資獲利亮眼，正偏財運皆處於極佳的狀態。", wealth_rev: "收益不如預期般豐厚，或是因過度揮霍而使得財富迅速流失。" },
-        { name: "審判", up: "覺醒、重生、原諒", rev: "自我懷疑、拒絕改變", love_up: "感情迎來重要的轉捩點，解開心結後關係獲得昇華與重生。", love_rev: "無法原諒過去的錯誤，深陷內疚之中，不願面對感情的改變。", work_up: "職涯面臨重要的考核或抉擇，過去的努力將決定最終的成果。", work_rev: "害怕接受新的挑戰，或是因過去的失敗陰影而停滯不前。", wealth_up: "財務狀況迎來關鍵的評估期，做對決策將徹底翻轉經濟現狀。", wealth_rev: "逃避財務問題，拒絕為過去的錯誤理財決策承擔責任與改變。" },
-        { name: "世界", up: "圓滿、完成、旅行", rev: "未完成、停滯", love_up: "感情修成正果，達到完美的和諧階段，或是一段美好的異國戀情。", love_rev: "關係卡在最後一步無法突破，或是缺乏跨出舒適圈的勇氣。", work_up: "專案完美收尾，事業版圖成功擴展，適合往海外或跨界發展。", work_rev: "工作成果缺乏臨門一腳，或是格局受限無法進一步提升。", wealth_up: "達成財務自由或階段性理財目標，海外投資將帶來豐厚回報。", wealth_rev: "理財計畫因準備不足而延宕，或是跨國投資面臨阻礙與延遲。" }
+        { name: "愚者", up: "新的開始、冒險、天真", rev: "魯莽、不穩定" },
+        { name: "魔術師", up: "創造力、主動、技能", rev: "潛能未發揮、欺騙" },
+        { name: "女祭司", up: "直覺、神秘、潛意識", rev: "忽視直覺、表面" },
+        { name: "皇后", up: "豐收、母性、培育", rev: "依賴、缺乏成長" },
+        { name: "皇帝", up: "權威、結構、控制", rev: "獨裁、固執" },
+        { name: "教皇", up: "傳統、信仰、教育", rev: "叛逆、打破傳統" },
+        { name: "戀人", up: "結合、美好的選擇", rev: "失和、錯誤決定" },
+        { name: "戰車", up: "勝利、意志力、推進", rev: "失控、挫折" },
+        { name: "力量", up: "勇氣、耐心、內在力量", rev: "自我懷疑、軟弱" },
+        { name: "隱者", up: "反省、內在指引", rev: "孤立、拒絕幫助" },
+        { name: "命運之輪", up: "轉機、好運、順勢", rev: "霉運、抗拒改變" },
+        { name: "正義", up: "公平、平衡、理性", rev: "不公、偏見" },
+        { name: "倒吊人", up: "換位思考、犧牲、暫停", rev: "無謂犧牲、停滯" },
+        { name: "死神", up: "結束、轉變、新生", rev: "抗拒改變、無法放下" },
+        { name: "節制", up: "平衡、和諧、淨化", rev: "極端、失衡" },
+        { name: "惡魔", up: "慾望、物質、束縛", rev: "解脫、重獲自由" },
+        { name: "高塔", up: "突變、災難、信念崩塌", rev: "危機解除、拖延改變" },
+        { name: "星星", up: "希望、靈感、平靜", rev: "絕望、悲觀" },
+        { name: "月亮", up: "不安、恐懼、潛意識", rev: "真相大白、撥雲見日" },
+        { name: "太陽", up: "成功、喜悅、活力", rev: "短暫悲傷、過度樂觀" },
+        { name: "審判", up: "覺醒、重生、原諒", rev: "自我懷疑、拒絕改變" },
+        { name: "世界", up: "圓滿、完成、旅行", rev: "未完成、停滯" }
     ];
 
     const readingTypes = {
-        daily: { id: 'daily', title: "🌟 每日運勢", name: "今日運勢", count: 1, labels: ["今日塔羅指引"] },
-        work: { id: 'work', title: "💼 工作運勢", name: "工作運勢", count: 3, labels: ["目前工作狀態", "面臨挑戰與建議", "未來事業方向"] },
-        wealth: { id: 'wealth', title: "💰 財富運勢", name: "財富運勢", count: 3, labels: ["目前財務狀況", "理財盲點與建議", "財運未來走向"] },
-        love: { id: 'love', title: "❤️ 感情運勢", name: "感情運勢", count: 3, labels: ["目前感情狀態", "雙方互動與建議", "關係未來發展"] }
+        daily: { id: 'daily', title: "🌟 每日運勢", name: "今日運勢", count: 1, labels: ["今日整體狀態"] },
+        work: { id: 'work', title: "💼 工作運勢", name: "工作發展", count: 3, labels: ["目前工作狀態", "面臨挑戰與建議", "未來事業方向"] },
+        wealth: { id: 'wealth', title: "💰 財富運勢", name: "財運走向", count: 3, labels: ["目前財務狀況", "理財盲點與建議", "財運未來走向"] },
+        love: { id: 'love', title: "❤️ 感情運勢", name: "感情發展", count: 3, labels: ["目前感情狀態", "雙方互動與建議", "關係未來發展"] },
+        health: { id: 'health', title: "🌿 健康運勢", name: "健康狀態", count: 3, labels: ["目前身心狀態", "日常保養建議", "未來健康走向"] },
+        palmistry: { id: 'palmistry', title: "✋ 手相運勢", name: "手相運勢", count: 3, labels: ["生命線 (活力與健康)", "智慧線 (思維與事業)", "感情線 (情感與人際)"] }
     };
 
     const zodiacTraits = {
@@ -299,6 +278,17 @@
         if (flippedCount === currentReading.count) setTimeout(generateAnalysis, 1200);
     }
 
+    // 動態產生專屬領域的解讀文案
+    function getContextualMeaning(card, typeId) {
+        const keyword = card.isReversed ? card.rev : card.up;
+        if (typeId === 'love') return card.isReversed ? `在感情層面上，這張牌暗示了${keyword}的阻礙，需特別留意。` : `在感情中展現出${keyword}的強大能量，關係發展順遂。`;
+        if (typeId === 'work') return card.isReversed ? `職場上容易遇到${keyword}的狀況，建議保守應對。` : `事業上將迎來${keyword}的契機，適合積極表現。`;
+        if (typeId === 'wealth') return card.isReversed ? `理財需避免${keyword}的陷阱，切勿盲目投資。` : `財富受到${keyword}的加持，有機會獲得不錯的回報。`;
+        if (typeId === 'health') return card.isReversed ? `身心狀態呈現${keyword}的警訊，需適當休息與調整。` : `目前健康充滿${keyword}的正面活力，免疫力佳。`;
+        if (typeId === 'palmistry') return card.isReversed ? `這條掌紋目前反映出${keyword}的弱點或波折。` : `這條主線展現了${keyword}的先天優勢與強大運勢。`;
+        return `整體運勢呈現${keyword}的狀態。`;
+    }
+
     function generateAnalysis() {
         document.getElementById('result-text').classList.remove('hidden');
         
@@ -307,52 +297,49 @@
         const typeId = currentReading.id;
         const typeName = currentReading.name;
 
-        // --- 1. 單獨看塔羅的特定領域 ---
-        let tarotHtml = `<h3>🃏 塔羅占卜的${typeName}</h3>`;
+        // 1. 塔羅的同步分析 (對應牌陣每個階段)
+        let tarotHtml = `<h3>🃏 塔羅牌眼中的「${typeName}」</h3>`;
         drawnCards.forEach((card, i) => {
             const status = card.isReversed ? '逆位' : '正位';
-            let domainMeaning = "";
-            // 動態抓取對應領域的牌義 (如 love_up, work_rev)
-            if (typeId === 'love' || typeId === 'work' || typeId === 'wealth') {
-                const key = typeId + (card.isReversed ? '_rev' : '_up');
-                domainMeaning = card[key];
-            } else {
-                domainMeaning = card.isReversed ? card.rev : card.up;
-            }
-            tarotHtml += `<p><span class="highlight">【${currentReading.labels[i]}】${card.name} (${status})</span><br>${domainMeaning}</p>`;
+            tarotHtml += `<p><strong>【${currentReading.labels[i]}】${card.name} (${status})</strong><br>${getContextualMeaning(card, typeId)}</p>`;
         });
         document.getElementById('box-tarot').innerHTML = tarotHtml;
 
-        // --- 2. 單獨看星座的特定領域 ---
+        // 2. 星座的同步分析 (對應牌陣每個階段)
         const zTrait = zodiacTraits[zodiac];
-        let zodiacText = "";
-        if(typeId === 'love') zodiacText = `在感情方面，身為${zodiac}的你，近期「<span class="highlight">${zTrait}</span>」的天性將主導你的關係走向。單身者可透過展現真實自我吸引對象；有伴侶者則需發揮這份特質來維繫感情溫度，避免過度執著於表象。`;
-        else if(typeId === 'work') zodiacText = `在事業發展上，${zodiac}「<span class="highlight">${zTrait}</span>」的特質是你突破現狀的最大武器。本期星象鼓勵你在職場中掌握主導權，將你的優勢最大化，能順利獲得認可。`;
-        else if(typeId === 'wealth') zodiacText = `在理財規劃上，${zodiac}「<span class="highlight">${zTrait}</span>」的特質提醒你要善用天生直覺。適合依循你的性格穩健佈局，避免被市場盲目的風向帶走資金。`;
-        else zodiacText = `今日星象顯示，${zodiac}「<span class="highlight">${zTrait}</span>」的特質將為你帶來獨特活力，順應天性節奏即可。`;
-        
-        document.getElementById('box-zodiac').innerHTML = `<h3>♈ 星座專屬的${typeName}</h3><p>${zodiacText}</p>`;
+        let zodiacHtml = `<h3>♈ 星座運勢同步解析</h3>`;
+        zodiacHtml += `<p>身為${zodiac}，你天生具備「<span class="highlight">${zTrait}</span>」的特質。這股星象能量在此刻的${typeName}中扮演著關鍵角色：</p><ul>`;
+        drawnCards.forEach((card, i) => {
+            if(i === 0) zodiacHtml += `<li><strong>面對【${currentReading.labels[i]}】</strong>：你的星座本性會影響你當下的判斷，${card.isReversed ? '容易因情緒波動而感到迷惘。' : '讓你充滿自信地掌握主導權。'}</li>`;
+            else if(i === 1) zodiacHtml += `<li><strong>關於【${currentReading.labels[i]}】</strong>：星象建議你，適時發揮或收斂「${zTrait.split('與')[0]}」的特質，將是突破當前僵局的關鍵。</li>`;
+            else zodiacHtml += `<li><strong>展望【${currentReading.labels[i]}】</strong>：只要順應你天生的節奏，未來的發展軌跡將會逐漸明朗。</li>`;
+        });
+        zodiacHtml += `</ul>`;
+        document.getElementById('box-zodiac').innerHTML = zodiacHtml;
 
-        // --- 3. 單獨看生肖的特定領域 ---
+        // 3. 生肖的同步分析 (對應牌陣每個階段)
         const cTrait = czTraits[cz];
-        let czText = "";
-        if(typeId === 'love') czText = `根據生肖流年，屬${cz}者「<span class="highlight">${cTrait}</span>」的磁場在近期感情中極為強烈。遇事不宜過度勉強，保持順勢而為的態度，將有意外的桃花或關係轉機。`;
-        else if(typeId === 'work') czText = `在職場佈局上，屬${cz}者「<span class="highlight">${cTrait}</span>」的特質能幫你化解不少阻礙。遇到需要應變的時刻，發揮生肖本性，職場貴人運將在不經意間降臨。`;
-        else if(typeId === 'wealth') czText = `求財方面，屬${cz}者「<span class="highlight">${cTrait}</span>」的磁場暗示著近期會有新的財務靈感。多留意周遭機會，有機會獲得意想不到的進帳。`;
-        else czText = `屬${cz}的你，今日請保持「<span class="highlight">${cTrait}</span>」的本心，好運自然會找上門。`;
-        
-        document.getElementById('box-cz').innerHTML = `<h3>🐀 生肖專屬的${typeName}</h3><p>${czText}</p>`;
+        let czHtml = `<h3>🐀 生肖流年同步解析</h3>`;
+        czHtml += `<p>屬${cz}的你，在流年磁場中展現了「<span class="highlight">${cTrait}</span>」的一面。這份生肖力量正與你的${typeName}產生共鳴：</p><ul>`;
+        drawnCards.forEach((card, i) => {
+            if(i === 0) czHtml += `<li><strong>在【${currentReading.labels[i]}】的表現</strong>：生肖本能讓你對現狀有著直覺的反應，${card.isReversed ? '需留意別讓急躁或固執壞了事。' : '能穩健地應對各種變化。'}</li>`;
+            else if(i === 1) czHtml += `<li><strong>在【${currentReading.labels[i]}】的應對</strong>：生肖磁場提醒你，多運用「${cTrait.split('、')[0]}」的智慧來化解人事物上的摩擦。</li>`;
+            else czHtml += `<li><strong>在【${currentReading.labels[i]}】的期盼</strong>：保持你生肖中強韌的生命力，好運與貴人自然會在前方等待。</li>`;
+        });
+        czHtml += `</ul>`;
+        document.getElementById('box-cz').innerHTML = czHtml;
 
-        // --- 4. 綜合塔羅、星座、生肖的特定領域分析 ---
-        const mainCard = drawnCards[0];
-        let combinedHtml = `<h3>🌟 綜合${typeName}終極分析</h3>`;
+        // 4. 終極綜合分析
+        // 計算牌陣整體的正逆位比例來決定整體能量
+        const upCount = drawnCards.filter(c => !c.isReversed).length;
+        let combinedHtml = `<h3>🌟 塔羅 × 星座 × 生肖 終極綜合分析</h3>`;
         
-        if(mainCard.isReversed) {
-            combinedHtml += `<p>綜合盤勢顯示：在目前的${typeName}中，你星座中的「${zTrait.split('與')[0]}」可能與生肖「${cTrait.split('、')[0]}」的本性產生了些微矛盾，導致塔羅主牌【${mainCard.name}】反映出逆位能量的拉扯。</p>`;
-            combinedHtml += `<p>💡 <strong>專屬建議：</strong>現階段請先放慢腳步。在${typeId === 'love' ? '處理感情' : typeId === 'work' ? '職場決策' : '財務運用'}上，不要急於求成，適時調和內在的矛盾心態，局勢將會自然明朗。</p>`;
+        if(upCount < drawnCards.length / 2) {
+            combinedHtml += `<p>綜合盤勢顯示：綜觀你這幾張牌的發展軌跡，塔羅牌呈現出較多逆位的拉扯能量。這代表你在${typeName}上面臨的考驗，可能正與${zodiac}的本性或屬${cz}的脾氣產生內在矛盾。</p>`;
+            combinedHtml += `<p>💡 <strong>最終建議：</strong>現階段請先放慢腳步。在處理【${currentReading.labels[0]}】與【${currentReading.labels[1]}】時，不要急於求成，適時調和內心衝突，【${currentReading.labels[currentReading.labels.length-1]}】才會迎來轉機。</p>`;
         } else {
-            combinedHtml += `<p>綜合盤勢顯示：非常棒的組合！在目前的${typeName}中，你生肖「${cTrait.split('、')[0]}」的優勢完美契合了${zodiac}近期的流年星象。塔羅主牌【${mainCard.name}】的正位能量更為你帶來了強大的擴張力。</p>`;
-            combinedHtml += `<p>💡 <strong>專屬建議：</strong>只要你在此刻的${typeId === 'love' ? '關係互動' : typeId === 'work' ? '工作表現' : '理財佈局'}上保持自信，順著你天生的性格去執行，必定能將阻力化為豐碩的果實！</p>`;
+            combinedHtml += `<p>綜合盤勢顯示：非常棒的能量矩陣！綜觀牌陣的發展軌跡，你生肖「${cTrait.split('、')[0]}」的優勢完美契合了${zodiac}近期的星象。塔羅牌陣的正位能量更為你帶來了強大的推進力。</p>`;
+            combinedHtml += `<p>💡 <strong>最終建議：</strong>只要你在此刻的【${currentReading.labels[0]}】上保持自信，並將「${zTrait.split('與')[0]}」的天賦運用在【${currentReading.labels[1]}】上，必定能將阻力化為豐碩的果實！</p>`;
         }
         document.getElementById('box-combined').innerHTML = combinedHtml;
     }
