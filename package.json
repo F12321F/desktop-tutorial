@@ -1,0 +1,29 @@
+{
+"name": "tarot-desktop-app",
+"version": "1.0.0",
+"description": "神秘塔羅牌占卜桌面版",
+"main": "main.js",
+"scripts": {
+"start": "electron .",
+"build": "electron-builder"
+},
+"author": "F12321F",
+"license": "MIT",
+"devDependencies": {
+"electron": "^28.0.0",
+"electron-builder": "^24.9.1"
+},
+"build": {
+"appId": "com.f12321f.tarot",
+"productName": "塔羅牌占卜",
+"mac": {
+"category": "public.app-category.lifestyle"
+},
+"win": {
+"target": "nsis"
+},
+"linux": {
+"target": "AppImage"
+}
+}
+}
