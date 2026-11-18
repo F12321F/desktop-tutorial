@@ -63,6 +63,7 @@
         <p>結合塔羅、星座、生肖與時間維度，為你提供全方位的指引</p>
         
         <div>
+            <!-- 新增時間範圍選擇器 -->
             <select id="time-range-select" style="border-color: var(--accent-gold);">
                 <option value="today">📅 今日運勢</option>
                 <option value="week">📅 本週運勢</option>
@@ -152,17 +153,17 @@
     ];
 
     const readingTypes = {
-        daily: { id: 'daily', name: "整體狀態", count: 1, labels: ["運勢指引"] },
-        work: { id: 'work', name: "工作運勢", count: 3, labels: ["目前狀態", "面臨挑戰與建議", "未來發展走向"] },
-        wealth: { id: 'wealth', name: "財富運勢", count: 3, labels: ["財務狀況", "理財盲點與建議", "財運未來走向"] },
-        love: { id: 'love', name: "感情運勢", count: 3, labels: ["目前感情狀態", "雙方互動與建議", "關係未來發展"] },
-        health: { id: 'health', name: "健康運勢", count: 3, labels: ["目前身心狀態", "日常保養建議", "未來健康走向"] },
-        palmistry: { id: 'palmistry', name: "手相運勢", count: 3, labels: ["生命線 (活力與健康)", "智慧線 (思維與事業)", "感情線 (情感與人際)"] }
+        daily: { id: 'daily', name: "整體狀態分析", count: 1, labels: ["狀態指引"] },
+        work: { id: 'work', name: "工作事業運勢", count: 3, labels: ["目前狀態", "面臨挑戰與建議", "未來發展走向"] },
+        wealth: { id: 'wealth', name: "財富理財運勢", count: 3, labels: ["財務狀況", "理財盲點與建議", "財運未來走向"] },
+        love: { id: 'love', name: "感情戀愛運勢", count: 3, labels: ["目前感情狀態", "雙方互動與建議", "關係未來發展"] },
+        health: { id: 'health', name: "身心健康運勢", count: 3, labels: ["目前身心狀態", "日常保養建議", "未來健康走向"] },
+        palmistry: { id: 'palmistry', name: "掌紋密碼運勢", count: 3, labels: ["生命線 (活力與健康)", "智慧線 (思維與事業)", "感情線 (情感與人際)"] }
     };
 
     const zodiacTraits = { "牡羊座":"行動力與熱情", "金牛座":"務實與耐心", "雙子座":"思維敏捷與適應力", "巨蟹座":"細膩直覺與防衛心", "獅子座":"自信與主導力", "處女座":"嚴謹細心與追求完美", "天秤座":"追求平衡與和諧", "天蠍座":"洞察力與愛恨分明", "射手座":"熱愛自由與樂觀", "摩羯座":"踏實堅忍與企圖心", "水瓶座":"打破常規與獨立", "雙魚座":"浪漫感性與直覺力" };
     const czTraits = { "鼠":"機智靈巧", "牛":"腳踏實地", "虎":"勇猛果敢", "兔":"溫和心思細膩", "龍":"追求卓越", "蛇":"冷靜直覺銳利", "馬":"奔放熱情", "羊":"溫順堅韌", "猴":"聰穎靈活多變", "雞":"勤奮條理分明", "狗":"忠誠重情義", "豬":"豁達隨和樂觀" };
-    const timeLabels = { "today": "今日", "week": "本週", "month": "本月", "3months": "未來三個月", "year": "今年" };
+    const timeLabels = { "today": "今日", "week": "本週", "month": "本月", "3months": "未來三個月", "year": "今年度" };
 
     let drawnCards = [];
     let flippedCount = 0;
@@ -180,6 +181,7 @@
         h3 = Math.imul(h1 ^ (h3 >>> 17), 951274213); h4 = Math.imul(h2 ^ (h4 >>> 19), 2716044179);
         return (h1^h2^h3^h4)>>>0;
     }
+    
     function mulberry32(a) {
         return function() {
           var t = a += 0x6D2B79F5;
@@ -187,6 +189,7 @@
           return ((t ^ t >>> 14) >>> 0) / 4294967296;
         }
     }
+    
     function getTimeString(range) {
         const d = new Date();
         if (range === 'today') return d.toDateString();
@@ -252,7 +255,7 @@
 
         document.getElementById('menu-screen').classList.add('hidden');
         document.getElementById('reading-screen').classList.remove('hidden');
-        document.getElementById('reading-title').innerText = `✨ ${timeText}的${currentReading.name}`;
+        document.getElementById('reading-title').innerText = `✨ 【${timeText}】的${currentReading.name}`;
         document.getElementById('result-text').classList.add('hidden');
         
         const container = document.getElementById('cards-container');
@@ -309,7 +312,7 @@
         const timeText = timeLabels[timeRange];
 
         // 1. 塔羅時間分析
-        let tarotHtml = `<h3>🃏 【${timeText}】的塔羅解析</h3>`;
+        let tarotHtml = `<h3>🃏 專屬【${timeText}】的塔羅解析</h3>`;
         drawnCards.forEach((card, i) => {
             const status = card.isReversed ? '逆位' : '正位';
             tarotHtml += `<p><strong>【${currentReading.labels[i]}】</strong>：${card.name} (${status})<br>${getContextualMeaning(card, typeId)}</p>`;
@@ -318,24 +321,24 @@
 
         // 2. 星座時間分析
         const zTrait = zodiacTraits[zodiac];
-        let zodiacHtml = `<h3>♈ 【${timeText}】的專屬星象觀點</h3>`;
+        let zodiacHtml = `<h3>♈ 專屬【${timeText}】的星座觀點</h3>`;
         zodiacHtml += `<p>身為${zodiac}，在<strong>${timeText}</strong>期間，你「<span class="highlight">${zTrait}</span>」的天性將強烈主導${typeName}：</p><ul>`;
         drawnCards.forEach((card, i) => {
-            if(i === 0) zodiacHtml += `<li>星象影響：你的星座本能讓你在${timeText}${card.isReversed ? '因情緒波動而迷惘。' : '能自信掌握主導權。'}</li>`;
-            else if(i === 1) zodiacHtml += `<li>應對策略：星象建議適時發揮「${zTrait.split('與')[0]}」來突破這段時間的僵局。</li>`;
-            else zodiacHtml += `<li>後續發展：順應你天生的節奏，${timeText}的發展將逐漸明朗。</li>`;
+            if(i === 0) zodiacHtml += `<li><strong>關於【${currentReading.labels[i]}】</strong>：星象本能讓你在這段期間${card.isReversed ? '因情緒波動而迷惘。' : '能自信掌握主導權。'}</li>`;
+            else if(i === 1) zodiacHtml += `<li><strong>面對【${currentReading.labels[i]}】</strong>：星象建議適時發揮「${zTrait.split('與')[0]}」來突破這段時間的僵局。</li>`;
+            else zodiacHtml += `<li><strong>針對【${currentReading.labels[i]}】</strong>：順應你天生的節奏，這段期間的發展將逐漸明朗。</li>`;
         });
         zodiacHtml += `</ul>`;
         document.getElementById('box-zodiac').innerHTML = zodiacHtml;
 
         // 3. 生肖時間分析
         const cTrait = czTraits[cz];
-        let czHtml = `<h3>🐀 【${timeText}】的專屬生肖流年</h3>`;
+        let czHtml = `<h3>🐀 專屬【${timeText}】的生肖流年</h3>`;
         czHtml += `<p>屬${cz}的你展現了「<span class="highlight">${cTrait}</span>」的一面。這份生肖力量在<strong>${timeText}</strong>正與${typeName}產生共鳴：</p><ul>`;
         drawnCards.forEach((card, i) => {
-            if(i === 0) czHtml += `<li>流年干擾：生肖本能讓你對現狀有直覺反應，${card.isReversed ? `留意別讓急躁壞了${timeText}的大事。` : `能穩健應對${timeText}的變化。`}</li>`;
-            else if(i === 1) czHtml += `<li>化解方式：流年提醒多運用「${cTrait}」的優勢化解摩擦。</li>`;
-            else czHtml += `<li>結語：保持強韌生命力，${timeText}的好運將在前方等待。</li>`;
+            if(i === 0) czHtml += `<li><strong>對於【${currentReading.labels[i]}】</strong>：生肖本能讓你對現狀有直覺反應，${card.isReversed ? `留意別讓急躁壞了這段時間的大事。` : `能穩健應對這段時間的變化。`}</li>`;
+            else if(i === 1) czHtml += `<li><strong>針對【${currentReading.labels[i]}】</strong>：流年提醒多運用「${cTrait}」的優勢化解摩擦。</li>`;
+            else czHtml += `<li><strong>關於【${currentReading.labels[i]}】</strong>：保持強韌生命力，這段時間的好運將在前方等待。</li>`;
         });
         czHtml += `</ul>`;
         document.getElementById('box-cz').innerHTML = czHtml;
