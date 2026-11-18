@@ -7,9 +7,10 @@
     <link rel="manifest" href="manifest.json">
     <style>
         :root {
-            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-bg: rgba(255, 255, 255, 0.08);
             --glass-border: rgba(255, 255, 255, 0.2);
             --text-color: #e0e0e0;
+            --accent-gold: #f1c40f;
         }
         body {
             margin: 0;
@@ -24,22 +25,22 @@
             overflow-x: hidden;
         }
         .container {
-            width: 90%;
+            width: 95%;
             max-width: 800px;
             margin: 2rem auto;
             text-align: center;
         }
         .glass-panel {
             background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--glass-border);
             border-radius: 20px;
             padding: 2rem;
             margin-bottom: 2rem;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
-        h1 { color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        h1, h2 { color: #fff; text-shadow: 0 0 10px rgba(255,255,255,0.4); }
         select, button {
             background: rgba(255, 255, 255, 0.15);
             border: 1px solid var(--glass-border);
@@ -53,32 +54,20 @@
         }
         select option { background: #1b2735; color: #fff; }
         button:hover { background: rgba(255, 255, 255, 0.25); transform: translateY(-2px); }
-        .grid-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .grid-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
         .hidden { display: none !important; }
         
         /* 卡牌區塊 */
-        .cards-container { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 20px; }
-        .card-wrapper { display: flex; flex-direction: column; align-items: center; width: 150px; }
-        .card-label { margin-bottom: 10px; font-weight: bold; color: #f39c12; }
-        .card {
-            width: 120px; height: 200px;
-            perspective: 1000px;
-            cursor: pointer;
-        }
-        .card-inner {
-            width: 100%; height: 100%;
-            transition: transform 0.8s;
-            transform-style: preserve-3d;
-            position: relative;
-        }
+        .cards-container { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-top: 20px; }
+        .card-wrapper { display: flex; flex-direction: column; align-items: center; width: 140px; }
+        .card-label { margin-bottom: 10px; font-weight: bold; color: var(--accent-gold); font-size: 14px; }
+        .card { width: 120px; height: 200px; perspective: 1000px; cursor: pointer; }
+        .card-inner { width: 100%; height: 100%; transition: transform 0.8s; transform-style: preserve-3d; position: relative; }
         .card.flipped .card-inner { transform: rotateY(180deg); }
         .card.flipped.reversed .card-inner { transform: rotateY(180deg) rotateZ(180deg); }
         .card-front, .card-back {
-            width: 100%; height: 100%;
-            position: absolute;
-            backface-visibility: hidden;
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
+            width: 100%; height: 100%; position: absolute; backface-visibility: hidden;
+            border-radius: 10px; display: flex; align-items: center; justify-content: center;
             border: 1px solid var(--glass-border);
         }
         .card-back {
@@ -86,24 +75,32 @@
             background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.1) 0, rgba(255,255,255,0.1) 2px, transparent 2px, transparent 10px);
         }
         .card-front {
-            background: #fff; color: #000;
-            transform: rotateY(180deg);
-            flex-direction: column;
-            text-align: center;
-            padding: 10px; box-sizing: border-box;
+            background: #fff; color: #000; transform: rotateY(180deg);
+            flex-direction: column; text-align: center; padding: 10px; box-sizing: border-box;
         }
         .card-name { font-weight: bold; font-size: 18px; margin-bottom: 5px; }
         .card-status { font-size: 12px; color: #e74c3c; margin-bottom: 10px; }
-        .result-text { text-align: left; margin-top: 30px; line-height: 1.6; }
-        .comprehensive-analysis { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--glass-border); color: #f1c40f; }
+        
+        /* 四大分析區塊 */
+        .result-container { margin-top: 30px; text-align: left; }
+        .analysis-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-left: 4px solid var(--accent-gold);
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border-radius: 0 10px 10px 0;
+            line-height: 1.6;
+        }
+        .analysis-box h3 { margin-top: 0; color: var(--accent-gold); display: flex; align-items: center; gap: 8px; }
+        .highlight { color: #fff; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container" id="menu-screen">
     <div class="glass-panel">
-        <h1>✨ 塔羅與星象占卜 ✨</h1>
-        <p>請選擇你的命理資訊，並挑選要占卜的項目</p>
+        <h1>✨ 命理綜合占卜 ✨</h1>
+        <p>結合塔羅、星座與生肖，為你提供全方位的指引</p>
         
         <div>
             <select id="zodiac-select">
@@ -137,10 +134,10 @@
         </div>
 
         <div class="grid-buttons">
-            <button onclick="startReading('daily')">🌟 每日運勢 (1張)</button>
-            <button onclick="startReading('work')">💼 工作運勢 (3張)</button>
-            <button onclick="startReading('wealth')">💰 財運分析 (3張)</button>
-            <button onclick="startReading('love')">❤️ 感情運勢 (3張)</button>
+            <button onclick="startReading('daily')">🌟 每日運勢</button>
+            <button onclick="startReading('work')">💼 工作運勢</button>
+            <button onclick="startReading('wealth')">💰 財富運勢</button>
+            <button onclick="startReading('love')">❤️ 感情運勢</button>
         </div>
     </div>
 </div>
@@ -148,22 +145,24 @@
 <div class="container hidden" id="reading-screen">
     <div class="glass-panel">
         <h2 id="reading-title">占卜中...</h2>
-        <p>請在心中默念你的問題，然後依序點擊卡牌翻開</p>
+        <p>請依序點擊下方卡牌，翻開你的命運</p>
         <div class="cards-container" id="cards-container"></div>
         
-        <div id="result-text" class="result-text hidden">
-            <h3>📖 解牌結果</h3>
-            <div id="cards-meaning"></div>
-            <div id="comprehensive-analysis" class="comprehensive-analysis"></div>
-            <button onclick="resetApp()" style="margin-top:20px; width:100%;">返回首頁重新占卜</button>
+        <div id="result-text" class="result-container hidden">
+            <!-- 四大分析區塊 -->
+            <div class="analysis-box" id="box-tarot"></div>
+            <div class="analysis-box" id="box-zodiac"></div>
+            <div class="analysis-box" id="box-cz"></div>
+            <div class="analysis-box" id="box-combined" style="border-left-color: #3498db; background: rgba(52, 152, 219, 0.1);"></div>
+            
+            <button onclick="resetApp()" style="margin-top:20px; width:100%;">重新占卜</button>
         </div>
     </div>
 </div>
 
 <script>
-    // 註冊 Service Worker (維持 App 功能)
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed', err));
+        navigator.serviceWorker.register('sw.js').catch(err => console.log('SW failed', err));
     }
 
     const majorArcana = [
@@ -192,15 +191,31 @@
     ];
 
     const readingTypes = {
-        daily: { title: "🌟 每日運勢", count: 1, labels: ["今日指引"] },
-        work: { title: "💼 工作運勢", count: 3, labels: ["目前工作狀態", "面臨的挑戰/建議", "未來發展"] },
-        wealth: { title: "💰 財運分析", count: 3, labels: ["目前財務狀況", "理財建議", "財富走向"] },
-        love: { title: "❤️ 感情運勢", count: 3, labels: ["目前感情狀態", "雙方互動/建議", "未來發展"] }
+        daily: { title: "🌟 每日運勢", name: "今日運勢", count: 1, labels: ["今日指引"] },
+        work: { title: "💼 工作運勢", name: "工作運程", count: 3, labels: ["目前工作狀態", "面臨的挑戰與建議", "未來發展方向"] },
+        wealth: { title: "💰 財富運勢", name: "財富走向", count: 3, labels: ["目前財務狀況", "理財盲點與建議", "財運未來走向"] },
+        love: { title: "❤️ 感情運勢", name: "感情發展", count: 3, labels: ["目前感情狀態", "雙方互動與建議", "關係未來發展"] }
+    };
+
+    // 星座特質庫
+    const zodiacTraits = {
+        "牡羊座":"充滿行動力與熱情", "金牛座":"務實穩重與耐心", "雙子座":"思維敏捷與適應力強",
+        "巨蟹座":"細膩直覺與防衛心", "獅子座":"自信耀眼與主導力", "處女座":"嚴謹細心與追求完美",
+        "天秤座":"追求平衡與和諧", "天蠍座":"洞察力深與愛恨分明", "射手座":"熱愛自由與樂觀",
+        "摩羯座":"踏實堅忍與企圖心", "水瓶座":"打破常規與獨立創新", "雙魚座":"浪漫感性與直覺力"
+    };
+
+    // 生肖特質庫
+    const czTraits = {
+        "鼠":"機智靈巧、反應快", "牛":"腳踏實地、刻苦耐勞", "虎":"勇猛果敢、具威嚴",
+        "兔":"溫和謹慎、心思細膩", "龍":"氣宇軒昂、追求卓越", "蛇":"冷靜沉著、直覺銳利",
+        "馬":"奔放熱情、勇往直前", "羊":"溫順包容、堅韌不拔", "猴":"聰穎機智、靈活多變",
+        "雞":"勤奮自信、條理分明", "狗":"忠誠正直、重情重義", "豬":"豁達隨和、樂觀知足"
     };
 
     let drawnCards = [];
     let flippedCount = 0;
-    let currentReadingInfo = null;
+    let currentReading = null;
 
     function getRandomCards(count) {
         let deck = [...majorArcana];
@@ -215,13 +230,13 @@
     }
 
     function startReading(type) {
-        currentReadingInfo = readingTypes[type];
-        drawnCards = getRandomCards(currentReadingInfo.count);
+        currentReading = readingTypes[type];
+        drawnCards = getRandomCards(currentReading.count);
         flippedCount = 0;
 
         document.getElementById('menu-screen').classList.add('hidden');
         document.getElementById('reading-screen').classList.remove('hidden');
-        document.getElementById('reading-title').innerText = currentReadingInfo.title;
+        document.getElementById('reading-title').innerText = currentReading.title;
         document.getElementById('result-text').classList.add('hidden');
         
         const container = document.getElementById('cards-container');
@@ -230,80 +245,72 @@
         drawnCards.forEach((card, index) => {
             const wrapper = document.createElement('div');
             wrapper.className = 'card-wrapper';
-            
-            const label = document.createElement('div');
-            label.className = 'card-label';
-            label.innerText = currentReadingInfo.labels[index];
-
-            const cardEl = document.createElement('div');
-            cardEl.className = 'card';
-            cardEl.onclick = () => flipCard(cardEl, card, index);
-
-            cardEl.innerHTML = `
-                <div class="card-inner">
-                    <div class="card-back"></div>
-                    <div class="card-front">
-                        <div class="card-name">${card.name}</div>
-                        <div class="card-status">${card.isReversed ? '【逆位】' : '【正位】'}</div>
+            wrapper.innerHTML = `
+                <div class="card-label">${currentReading.labels[index]}</div>
+                <div class="card" onclick="flipCard(this, ${index})">
+                    <div class="card-inner">
+                        <div class="card-back"></div>
+                        <div class="card-front">
+                            <div class="card-name">${card.name}</div>
+                            <div class="card-status">${card.isReversed ? '【逆位】' : '【正位】'}</div>
+                        </div>
                     </div>
                 </div>
             `;
-            wrapper.appendChild(label);
-            wrapper.appendChild(cardEl);
             container.appendChild(wrapper);
         });
     }
 
-    function flipCard(element, cardData, index) {
+    function flipCard(element, index) {
         if (element.classList.contains('flipped')) return;
-        
+        const cardData = drawnCards[index];
         element.classList.add('flipped');
-        if (cardData.isReversed) {
-            setTimeout(() => element.classList.add('reversed'), 400);
-        }
+        if (cardData.isReversed) setTimeout(() => element.classList.add('reversed'), 400);
         
         flippedCount++;
-        if (flippedCount === currentReadingInfo.count) {
-            setTimeout(showResult, 1000);
-        }
+        if (flippedCount === currentReading.count) setTimeout(generateAnalysis, 1200);
     }
 
-    function showResult() {
+    function generateAnalysis() {
         document.getElementById('result-text').classList.remove('hidden');
-        const meaningContainer = document.getElementById('cards-meaning');
-        meaningContainer.innerHTML = '';
+        
+        const zodiac = document.getElementById('zodiac-select').value;
+        const cz = document.getElementById('chinese-zodiac-select').value;
+        const typeName = currentReading.name;
 
-        drawnCards.forEach((card, index) => {
+        // 1. 單獨塔羅分析
+        let tarotHtml = `<h3>🃏 專屬塔羅解析 (${typeName})</h3>`;
+        drawnCards.forEach((card, i) => {
             const keyword = card.isReversed ? card.rev : card.up;
             const status = card.isReversed ? '逆位' : '正位';
-            meaningContainer.innerHTML += `
-                <p><strong>${currentReadingInfo.labels[index]}：${card.name} (${status})</strong><br>
-                解讀關鍵：${keyword}</p>
-            `;
+            tarotHtml += `<p><span class="highlight">【${currentReading.labels[i]}】${card.name} (${status})</span><br>牌義點化：${keyword}</p>`;
         });
+        document.getElementById('box-tarot').innerHTML = tarotHtml;
 
-        generateComprehensiveAnalysis();
-    }
+        // 2. 單獨星座分析
+        const zTrait = zodiacTraits[zodiac];
+        let zodiacHtml = `<h3>♈ 星座運勢：${zodiac}的${typeName}</h3>`;
+        zodiacHtml += `<p>本期星象顯示，擁有「<span class="highlight">${zTrait}</span>」特質的你在${typeName}上將受到放大。如果是工作或財運，建議發揮你的核心優勢來掌握主導權；若在感情與人際中，則要留意星象變化帶來的情緒波動。順應你天生的節奏，將能避開盲點。</p>`;
+        document.getElementById('box-zodiac').innerHTML = zodiacHtml;
 
-    function generateComprehensiveAnalysis() {
-        const zodiac = document.getElementById('zodiac-select').value;
-        const chineseZodiac = document.getElementById('chinese-zodiac-select').value;
+        // 3. 單獨生肖分析
+        const cTrait = czTraits[cz];
+        let czHtml = `<h3>🐀 生肖運勢：屬${cz}的${typeName}</h3>`;
+        czHtml += `<p>根據生肖流年磁場，屬${cz}者「<span class="highlight">${cTrait}</span>」的本性會成為你近期的關鍵力量。在${typeName}的發展上，建議保持你生肖中穩健與靈活的一面。遇事不宜過度勉強，順勢而為將有意外的貴人或轉機出現。</p>`;
+        document.getElementById('box-cz').innerHTML = czHtml;
+
+        // 4. 綜合分析 (交叉比對)
         const mainCard = drawnCards[0];
-        const statusText = mainCard.isReversed ? '逆位' : '正位';
+        const energy = mainCard.isReversed ? "需要內省與調整" : "充滿擴張與正向";
+        let combinedHtml = `<h3>🌟 塔羅 × 星座 × 生肖 終極綜合分析</h3>`;
+        combinedHtml += `<p>當<strong>${zodiac}</strong>的流年星象，遇上<strong>屬${cz}</strong>的生肖磁場，再加上塔羅主牌「<strong>${mainCard.name}</strong>」的指引，顯示出你近期的${typeName}正處於一個「<span class="highlight">${energy}</span>」的階段。</p>`;
         
-        const analysisBox = document.getElementById('comprehensive-analysis');
-        
-        // 簡易的動態文案引擎
-        let baseMsg = `<h3>✨ 綜合星象與生肖分析 ✨</h3>`;
-        baseMsg += `<p>身為重視自我節奏的<strong>${zodiac}</strong>，同時帶有<strong>屬${chineseZodiac}</strong>特有行事風格的你，在這次占卜中迎來了「${mainCard.name}」的${statusText}。</p>`;
-        
-        if (!mainCard.isReversed) {
-            baseMsg += `<p>這股能量與你的命理特質產生正向共鳴。星象顯示你近期的直覺較為敏銳，生肖運程也暗示著穩步向前的契機。塔羅牌提醒你：發揮你天生的優勢，將卡牌代表的「${mainCard.up}」精神融入你的決策中，順勢而為將會帶來好結果。</p>`;
+        if(mainCard.isReversed) {
+            combinedHtml += `<p>綜合建議：你星座中的「${zTrait.split('與')[0]}」可能與生肖的本性產生些微拉扯，導致塔羅牌呈現逆位。現階段在${typeName}上，請先放慢腳步，不要急於求成，化解內在矛盾後，局勢將會自然明朗。</p>`;
         } else {
-            baseMsg += `<p>這股逆位能量提醒著你，近期需要稍微收斂本性中的衝動或固執。結合你的星座與生肖特質，你可能會感到外在環境與內心期盼有些拉扯。塔羅牌建議你留意「${mainCard.rev}」的潛在挑戰，適時調整心態，方能化阻力為助力。</p>`;
+            combinedHtml += `<p>綜合建議：太棒了！你生肖中「${cTrait.split('、')[0]}」的優勢完美契合了近期的星座運勢。塔羅牌的正位能量更暗示著，只要你在此刻的${typeName}決策上保持自信，必定能將阻力化為豐碩的果實！</p>`;
         }
-
-        analysisBox.innerHTML = baseMsg;
+        document.getElementById('box-combined').innerHTML = combinedHtml;
     }
 
     function resetApp() {
