@@ -1,43 +1,514 @@
-const { app, BrowserWindow } = require('electron');
-const path = require('path');
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>神秘塔羅牌占卜</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Serif TC', serif;
+            background: radial-gradient(circle at 50% 50%, #2b1055 0%, #0d041a 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            margin: 0;
+        }
 
-function createWindow () {
-  // 建立瀏覽器視窗
-  const win = new BrowserWindow({
-    width: 1024,
-    height: 768,
-    minWidth: 800,
-    minHeight: 600,
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false
-    },
-    // 隱藏預設的選單列以符合遊戲的沉浸感
-    autoHideMenuBar: true, 
-    title: "神秘塔羅牌占卜"
-  });
+        /* 滿天星斗背景動畫 */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        .star {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            animation: twinkle infinite ease-in-out;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
 
-  // 載入我們之前寫好的塔羅牌網頁遊戲
-  // 請確保原本的 tarot-game.html 已重新命名為 index.html，或是修改下方的檔名
-  win.loadFile('index.html');
-}
+        /* 玻璃擬態 (Glassmorphism) */
+        .glass-panel {
+            background: rgba(25, 10, 40, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 215, 0, 0.15);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
 
-// 當 Electron 完成初始化並準備好建立瀏覽器視窗時呼叫
-app.whenReady().then(() => {
-  createWindow();
+        /* 塔羅牌 3D 翻轉效果 */
+        .card-scene {
+            perspective: 1000px;
+            cursor: pointer;
+        }
+        .card-object {
+            width: 100%;
+            aspect-ratio: 2 / 3;
+            position: relative;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
+        }
+        .card-object.is-flipped {
+            transform: rotateY(180deg);
+        }
+        .card-object.is-reversed-flip {
+            transform: rotateY(180deg) rotateZ(180deg);
+        }
+        
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        /* 牌背設計 */
+        .card-back {
+            background: linear-gradient(135deg, #160a2b, #301758);
+            border: 2px solid #b89342;
+            background-image: 
+                radial-gradient(circle at center, rgba(212, 175, 55, 0.2) 0%, transparent 60%),
+                repeating-linear-gradient(45deg, rgba(212, 175, 55, 0.05) 0px, rgba(212, 175, 55, 0.05) 10px, transparent 10px, transparent 20px);
+        }
+        .card-back::after {
+            content: '✧';
+            font-size: 3rem;
+            color: #d4af37;
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.8);
+        }
 
-  app.on('activate', () => {
-    // 在 macOS 上，當點擊 dock 圖示且沒有其他視窗開啟時，
-    // 通常會重新建立一個視窗。
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
-  });
-});
+        /* 牌面設計 */
+        .card-front {
+            background: linear-gradient(to bottom, #fdfbfb 0%, #ebedee 100%);
+            color: #1a202c;
+            transform: rotateY(180deg);
+            border: 4px solid #b89342;
+            padding: 10px;
+        }
+        .card-front .icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+        }
+        .card-front .name {
+            font-weight: bold;
+            font-size: 1.1rem;
+            text-align: center;
+            color: #2d3748;
+        }
+        .card-front .number {
+            position: absolute;
+            top: 8px;
+            font-family: serif;
+            font-size: 1.2rem;
+            color: #b89342;
+            font-weight: bold;
+        }
 
-// 當所有視窗都關閉時結束程式，除了 macOS
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
+        /* 按鈕樣式 */
+        .btn-gold {
+            background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+            color: #4a0000;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .btn-gold:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(252, 246, 186, 0.6);
+        }
+        .btn-gold:active {
+            transform: translateY(1px);
+        }
+
+        /* 自定義捲軸 */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        ::-webkit-scrollbar-thumb { background: #b89342; border-radius: 4px; }
+    </style>
+</head>
+<body class="antialiased flex flex-col items-center">
+
+    <!-- 星空背景 -->
+    <div class="stars" id="stars"></div>
+
+    <div class="container mx-auto px-4 py-8 max-w-5xl w-full flex flex-col min-h-screen relative z-10">
+        
+        <!-- 標題區 -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold mb-3 tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-yellow-400 to-yellow-600 drop-shadow-lg">
+                ✦ 神秘塔羅占卜 ✦
+            </h1>
+            <p class="text-gray-300 text-sm md:text-base tracking-wide">靜下心來，在心中默念你的問題，讓牌卡為你指引方向。</p>
+        </header>
+
+        <!-- 主體內容區 -->
+        <main class="flex-grow flex flex-col items-center w-full">
+            
+            <!-- 階段 1：選擇牌陣 -->
+            <div id="phase-select" class="glass-panel p-8 rounded-2xl w-full max-w-md text-center shadow-2xl transition-opacity duration-500">
+                <h2 class="text-2xl font-bold mb-6 text-yellow-400">請選擇占卜項目</h2>
+                <div class="space-y-4">
+                    <button onclick="startGame('daily')" class="w-full btn-gold py-3 px-6 rounded-lg text-lg flex items-center justify-center gap-2">
+                        <span>✨</span> 每日運勢 (抽 1 張)
+                    </button>
+                    <button onclick="startGame('career')" class="w-full btn-gold py-3 px-6 rounded-lg text-lg flex items-center justify-center gap-2">
+                        <span>💼</span> 工作運勢 (抽 3 張)
+                    </button>
+                    <button onclick="startGame('wealth')" class="w-full btn-gold py-3 px-6 rounded-lg text-lg flex items-center justify-center gap-2">
+                        <span>💰</span> 財富運勢 (抽 3 張)
+                    </button>
+                    <button onclick="startGame('love')" class="w-full btn-gold py-3 px-6 rounded-lg text-lg flex items-center justify-center gap-2">
+                        <span>❤️</span> 感情運勢 (抽 3 張)
+                    </button>
+                </div>
+            </div>
+
+            <!-- 階段 2：抽牌區 -->
+            <div id="phase-draw" class="hidden w-full flex-col items-center transition-opacity duration-500">
+                <div class="glass-panel w-full p-4 md:p-6 rounded-2xl mb-6 text-center">
+                    <h2 class="text-xl md:text-2xl text-yellow-400 font-bold mb-2" id="draw-instruction">請憑直覺抽取 3 張牌</h2>
+                    <p class="text-gray-300 text-sm" id="draw-status">已抽取: 0 / 3</p>
+                </div>
+                
+                <!-- 牌堆網格 -->
+                <div id="deck-grid" class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3 md:gap-4 w-full justify-items-center mb-8">
+                    <!-- 牌卡由 JS 動態生成 -->
+                </div>
+            </div>
+
+            <!-- 階段 3：解牌結果 -->
+            <div id="phase-result" class="hidden w-full flex-col items-center transition-opacity duration-500">
+                <h2 class="text-3xl font-bold mb-8 text-yellow-400 drop-shadow-md border-b border-yellow-600/50 pb-2">占卜結果</h2>
+                
+                <!-- 展牌區 -->
+                <div id="spread-container" class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 w-full mb-10 justify-items-center max-w-4xl">
+                    <!-- 抽中的牌由 JS 動態生成 -->
+                </div>
+
+                <!-- 解牌文字區 -->
+                <div id="reading-container" class="glass-panel w-full p-6 md:p-8 rounded-2xl max-w-4xl space-y-6">
+                    <!-- 解牌內容由 JS 動態生成 -->
+                </div>
+
+                <div class="mt-10 mb-8">
+                    <button onclick="resetGame()" class="btn-gold py-3 px-8 rounded-full text-lg shadow-lg">
+                        重新占卜 ↺
+                    </button>
+                </div>
+            </div>
+
+        </main>
+        
+        <!-- 頁尾 -->
+        <footer class="text-center text-gray-500 text-xs mt-auto py-4">
+            &copy; 2026 塔羅牌小遊戲. 僅供娛樂與自我探索。
+        </footer>
+    </div>
+
+    <script>
+        // --- 背景星星動畫生成 ---
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            const count = 100;
+            for (let i = 0; i < count; i++) {
+                let star = document.createElement('div');
+                star.className = 'star';
+                let size = Math.random() * 3;
+                star.style.width = size + 'px';
+                star.style.height = size + 'px';
+                star.style.left = Math.random() * 100 + 'vw';
+                star.style.top = Math.random() * 100 + 'vh';
+                star.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                star.style.animationDelay = Math.random() * 2 + 's';
+                starsContainer.appendChild(star);
+            }
+        }
+        createStars();
+
+        // --- 塔羅牌資料 (大阿爾克那 22 張) ---
+        const tarotData = [
+            { id: 0, name: "愚者 (The Fool)", icon: "🃏", num: "0", 
+              upright: "新的開始、冒險、天真、自發性、潛力。", 
+              reversed: "魯莽、冒險過度、盲目、不負責任、錯失良機。" },
+            { id: 1, name: "魔術師 (The Magician)", icon: "🪄", num: "I", 
+              upright: "創造力、技能、意志力、自信、實現夢想。", 
+              reversed: "操控、缺乏計畫、才能未發揮、欺騙。" },
+            { id: 2, name: "女祭司 (The High Priestess)", icon: "📜", num: "II", 
+              upright: "直覺、潛意識、神秘、內在智慧、平靜。", 
+              reversed: "隱藏的秘密、忽視直覺、表面化、情緒壓抑。" },
+            { id: 3, name: "皇后 (The Empress)", icon: "👑", num: "III", 
+              upright: "豐收、母性、培育、豐富、美的享受。", 
+              reversed: "依賴、過度保護、創造力受阻、資源匱乏。" },
+            { id: 4, name: "皇帝 (The Emperor)", icon: "🪑", num: "IV", 
+              upright: "權威、結構、控制、父性、邏輯與秩序。", 
+              reversed: "專制、缺乏紀律、死板、濫用權力。" },
+            { id: 5, name: "教皇 (The Hierophant)", icon: "🗝️", num: "V", 
+              upright: "傳統、信仰、教育、精神指引、順從。", 
+              reversed: "叛逆、打破傳統、盲從、束縛。" },
+            { id: 6, name: "戀人 (The Lovers)", icon: "💑", num: "VI", 
+              upright: "愛情、和諧、關係、價值觀的選擇、結合。", 
+              reversed: "關係破裂、錯誤的選擇、不和諧、誘惑。" },
+            { id: 7, name: "戰車 (The Chariot)", icon: "🐎", num: "VII", 
+              upright: "意志力、勝利、決心、行動、克服困難。", 
+              reversed: "失去控制、方向錯誤、阻礙、好鬥。" },
+            { id: 8, name: "力量 (Strength)", icon: "🦁", num: "VIII", 
+              upright: "勇氣、耐心、內在力量、同情心、柔克剛。", 
+              reversed: "自我懷疑、軟弱、缺乏自信、失控。" },
+            { id: 9, name: "隱者 (The Hermit)", icon: "🏮", num: "IX", 
+              upright: "反省、孤獨、內在指引、尋求真理。", 
+              reversed: "孤立、逃避現實、偏執、拒絕建議。" },
+            { id: 10, name: "命運之輪 (Wheel of Fortune)", icon: "🎡", num: "X", 
+              upright: "轉機、命運、幸運、循環、不可預測的變化。", 
+              reversed: "壞運氣、抗拒改變、失去控制、厄運。" },
+            { id: 11, name: "正義 (Justice)", icon: "⚖️", num: "XI", 
+              upright: "公平、真相、法律、因果、客觀。", 
+              reversed: "不公、偏見、不誠實、推卸責任。" },
+            { id: 12, name: "倒吊人 (The Hanged Man)", icon: "🙃", num: "XII", 
+              upright: "暫停、換位思考、犧牲、放手、新視角。", 
+              reversed: "無謂的牺牲、停滯不前、固執、延遲。" },
+            { id: 13, name: "死神 (Death)", icon: "💀", num: "XIII", 
+              upright: "結束、轉變、新生、放下過去、過渡期。", 
+              reversed: "抗拒改變、停滯、無法自拔、恐懼未來。" },
+            { id: 14, name: "節制 (Temperance)", icon: "🏺", num: "XIV", 
+              upright: "平衡、中庸、耐心、結合、和諧。", 
+              reversed: "失衡、極端、缺乏耐心、衝突。" },
+            { id: 15, name: "惡魔 (The Devil)", icon: "😈", num: "XV", 
+              upright: "誘惑、物質主義、束縛、成癮、陰暗面。", 
+              reversed: "重獲自由、打破束縛、克服誘惑、覺醒。" },
+            { id: 16, name: "高塔 (The Tower)", icon: "🌩️", num: "XVI", 
+              upright: "突變、崩潰、毀滅、啟示、打破虛假。", 
+              reversed: "避免災難、害怕改變、拖延不可避免的結果。" },
+            { id: 17, name: "星星 (The Star)", icon: "⭐", num: "XVII", 
+              upright: "希望、靈感、平靜、療癒、積極的未來。", 
+              reversed: "絕望、缺乏信心、失去靈感、悲觀。" },
+            { id: 18, name: "月亮 (The Moon)", icon: "🌙", num: "XVIII", 
+              upright: "幻覺、恐懼、潛意識、直覺、不安。", 
+              reversed: "真相大白、克服恐懼、解開誤會、清晰。" },
+            { id: 19, name: "太陽 (The Sun)", icon: "☀️", num: "XIX", 
+              upright: "成功、快樂、活力、溫暖、真相、慶祝。", 
+              reversed: "暫時的陰霾、過度樂觀、延遲的成功。" },
+            { id: 20, name: "審判 (Judgement)", icon: "📯", num: "XX", 
+              upright: "重生、內在呼喚、寬恕、反省、覺醒。", 
+              reversed: "自我批評、忽視呼喚、恐懼改變、停滯。" },
+            { id: 21, name: "世界 (The World)", icon: "🌍", num: "XXI", 
+              upright: "完成、圓滿、成就、旅行、整合。", 
+              reversed: "未完成、缺乏封閉、延遲、停滯不前。" }
+        ];
+
+        // --- 遊戲狀態管理 ---
+        let currentDeck = [];
+        let drawnCards = [];
+        let requiredCards = 1;
+        let currentCategory = 'daily';
+        
+        // --- 遊戲邏輯 ---
+        
+        // 洗牌演算法 (Fisher-Yates)
+        function shuffleDeck() {
+            let deck = [...tarotData];
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+            return deck;
+        }
+
+        // 開始遊戲
+        function startGame(category) {
+            currentCategory = category;
+            if (category === 'daily') {
+                requiredCards = 1;
+            } else {
+                requiredCards = 3; // 工作、財運、感情皆使用三張牌陣
+            }
+
+            drawnCards = [];
+            currentDeck = shuffleDeck();
+            
+            // UI 切換
+            document.getElementById('phase-select').classList.add('hidden');
+            document.getElementById('phase-draw').classList.remove('hidden');
+            document.getElementById('phase-draw').classList.add('flex');
+            
+            // 更新提示文字
+            document.getElementById('draw-instruction').innerText = `請憑直覺抽取 ${requiredCards} 張牌`;
+            document.getElementById('draw-status').innerText = `已抽取: 0 / ${requiredCards}`;
+            
+            renderDeckGrid();
+        }
+
+        // 渲染牌堆網格
+        function renderDeckGrid() {
+            const grid = document.getElementById('deck-grid');
+            grid.innerHTML = '';
+            
+            // 顯示 22 張蓋著的牌
+            for (let i = 0; i < 22; i++) {
+                const cardContainer = document.createElement('div');
+                cardContainer.className = 'card-scene w-12 sm:w-16 md:w-20 lg:w-24';
+                
+                cardContainer.innerHTML = `
+                    <div class="card-object" id="deck-card-${i}" onclick="drawCard(${i})">
+                        <div class="card-back rounded-lg shadow-md"></div>
+                        <!-- 正面在抽牌階段不需要詳細渲染，翻開後才決定是哪張 -->
+                        <div class="card-front rounded-lg"></div>
+                    </div>
+                `;
+                grid.appendChild(cardContainer);
+            }
+        }
+
+        // 抽牌動作
+        function drawCard(index) {
+            // 如果已經抽滿，或是這張牌已經被抽過，則忽略
+            const cardObj = document.getElementById(`deck-card-${index}`);
+            if (drawnCards.length >= requiredCards || cardObj.classList.contains('is-flipped')) {
+                return;
+            }
+
+            // 決定正逆位 (50%機率)
+            const isReversed = Math.random() > 0.5;
+            
+            // 從洗好的牌堆中取出一張牌
+            const cardData = currentDeck[drawnCards.length];
+            
+            drawnCards.push({
+                data: cardData,
+                isReversed: isReversed,
+                uiIndex: index
+            });
+
+            // 視覺效果：讓牌消失或標記已抽
+            cardObj.style.opacity = '0.3';
+            cardObj.style.pointerEvents = 'none';
+            cardObj.style.transform = 'translateY(-20px)';
+
+            // 更新狀態文字
+            document.getElementById('draw-status').innerText = `已抽取: ${drawnCards.length} / ${requiredCards}`;
+
+            // 如果抽滿了，進入解牌階段
+            if (drawnCards.length === requiredCards) {
+                setTimeout(() => {
+                    showResults();
+                }, 800);
+            }
+        }
+
+        // 顯示結果
+        function showResults() {
+            document.getElementById('phase-draw').classList.add('hidden');
+            document.getElementById('phase-draw').classList.remove('flex');
+            
+            const resultPhase = document.getElementById('phase-result');
+            resultPhase.classList.remove('hidden');
+            resultPhase.classList.add('flex');
+
+            const spreadContainer = document.getElementById('spread-container');
+            const readingContainer = document.getElementById('reading-container');
+            
+            spreadContainer.innerHTML = '';
+            readingContainer.innerHTML = '';
+
+            // 定義牌陣位置名稱 (依據占卜類別)
+            let positionNames = [];
+            if (currentCategory === 'daily') {
+                positionNames = ["今日指引"];
+            } else if (currentCategory === 'career') {
+                positionNames = ["目前職場現況", "建議採取的行動", "未來的發展結果"];
+            } else if (currentCategory === 'wealth') {
+                positionNames = ["目前財務狀況", "理財與投資建議", "未來的財富走向"];
+            } else if (currentCategory === 'love') {
+                positionNames = ["目前感情狀態", "關係的應對建議", "未來的發展預測"];
+            }
+
+            // 改變 Grid 佈局以適應卡片數量
+            spreadContainer.className = `grid grid-cols-1 ${requiredCards === 3 ? 'md:grid-cols-3' : 'md:grid-cols-1'} gap-6 md:gap-10 w-full mb-10 justify-items-center max-w-4xl`;
+
+            drawnCards.forEach((drawn, i) => {
+                const card = drawn.data;
+                const posName = positionNames[i];
+                const statusText = drawn.isReversed ? '逆位' : '正位';
+                const statusColor = drawn.isReversed ? 'text-red-400' : 'text-green-400';
+                
+                // 1. 產生展牌區的卡片
+                const cardHtml = `
+                    <div class="flex flex-col items-center animate-fade-in-up" style="animation-delay: ${i * 0.2}s">
+                        <div class="text-yellow-400 font-bold mb-3 tracking-widest bg-black/40 px-4 py-1 rounded-full border border-yellow-500/30">${posName}</div>
+                        <div class="card-scene w-40 md:w-56 mb-4">
+                            <div class="card-object ${drawn.isReversed ? 'is-reversed-flip' : 'is-flipped'} shadow-2xl">
+                                <div class="card-back"></div>
+                                <div class="card-front">
+                                    <span class="number">${card.num}</span>
+                                    <span class="icon">${card.icon}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-1 text-center">${card.name}</h3>
+                        <span class="text-sm font-bold ${statusColor} px-2 py-1 rounded bg-black/30">${statusText}</span>
+                    </div>
+                `;
+                spreadContainer.innerHTML += cardHtml;
+
+                // 2. 產生解牌文字區
+                const meaning = drawn.isReversed ? card.reversed : card.upright;
+                const readingHtml = `
+                    <div class="border-l-4 ${drawn.isReversed ? 'border-red-500' : 'border-green-500'} pl-4 py-2 animate-fade-in-up" style="animation-delay: ${0.6 + i * 0.2}s">
+                        <h4 class="text-lg font-bold text-yellow-300 mb-1 flex items-center gap-2">
+                            <span>【${posName}】</span> ${card.name} (${statusText})
+                        </h4>
+                        <p class="text-gray-200 leading-relaxed text-justify">
+                            <span class="text-gray-400 text-sm block mb-1">關鍵字：</span>
+                            ${meaning}
+                        </p>
+                    </div>
+                `;
+                readingContainer.innerHTML += readingHtml;
+            });
+        }
+
+        // 重新開始
+        function resetGame() {
+            document.getElementById('phase-result').classList.add('hidden');
+            document.getElementById('phase-result').classList.remove('flex');
+            
+            document.getElementById('phase-select').classList.remove('hidden');
+            
+            // 捲動到頂部
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 新增簡單的動畫類別至 head
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @keyframes fadeInUp {
+                from { opacity: 0; transform: translateY(20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            .animate-fade-in-up {
+                animation: fadeInUp 0.6s ease-out forwards;
+                opacity: 0;
+            }
+        `;
+        document.head.appendChild(style);
+
+    </script>
+</body>
+  </html>
